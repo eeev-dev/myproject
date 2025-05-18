@@ -1,0 +1,36 @@
+{% extends 'main/base.html' %}
+
+{% block style %}<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/intern_table.css') }}">{% endblock %}
+
+{% block content %}
+<div class="table-responsive custom-table-responsive">
+    <table>
+    <thead>
+      <tr>
+        <th>Студент</th>
+        <th>Группа</th>
+        <th>Место практики</th>
+        <th>Места</th>
+        <th>Курс</th>
+        <th>Руководитель практики</th>
+        <th>Баллы</th>
+        <th>Действие</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for intern in interns %}
+      <tr>
+        <td>{{ intern.name }}</td>
+        <td>{{ intern.group }}</td>
+        <td>{{ intern.place }}</td>
+        <td>{{ intern.places }}</td>
+        <td>{{ intern.year }}</td>
+        <td>{{ intern.head_teacher }}</td>
+        <td>{{ intern.score }}</td>
+        <td><a href="#" class="btn">Подтвердить</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+<div class="custom-header">
+  <div class="left-block">
+    <a href="{{ url_for('post.all') }}" class="logo-link">
+      <img class="header__img" src="{{ url_for('static', filename='img/logo.jpg')}}" alt="logo">
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="{{ url_for('post.all') }}">Главная</a></li>
+      {% if current_user.is_authenticated %}
+        <li><a href="{{ url_for('post.create') }}">Добавить тему</a></li>
+        <li><a href="{{ url_for('intern.all') }}">Практиканты</a></li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class="auth-block">
+    {% if current_user.is_authenticated %}
+      <span class="welcome">Добро пожаловать, {{ current_user.login }}</span>
+      <a href="{{ url_for('user.logout') }}" class="btn">Выйти</a>
+    {% else %}
+      <a href="{{ url_for('user.login') }}" class="btn outline">Вход</a>
+      <a href="{{ url_for('user.register') }}" class="btn">Регистрация</a>
+    {% endif %}
+  </div>
+</div>
