@@ -3,6 +3,8 @@ import io
 from datetime import datetime
 import os
 import secrets
+import time
+from flask import request
 from fileinput import filename
 
 from flask import current_app, jsonify, send_from_directory
@@ -20,6 +22,7 @@ from ..extensions import db
 
 intern = Blueprint('intern', __name__)
 
+# Сайт
 
 def get_filtered_interns(filter_param):
     interns = Intern.query.filter_by(head_teacher=current_user.name)
@@ -63,6 +66,7 @@ def get_filtered_interns(filter_param):
 
 @intern.route('/intern/all', methods=['GET'])
 def all():
+    start = time.time()
     if current_user.practice_deadline is not None:
         if datetime.utcnow() > current_user.practice_deadline:
             for intern in Intern.query.filter_by(head_teacher=current_user.name).filter_by(status='Без заявки').all():
@@ -70,29 +74,9 @@ def all():
             db.session.commit()
     filter_param = request.args.get('filter', 'pending')
     interns = get_filtered_interns(filter_param)
+    end = time.time()
+    print(f"/intern-table took {round((end - start) * 1000)} ms")
     return render_template('intern/all.html', interns=interns, current_filter=filter_param)
-
-
-@intern.route('/intern/create', methods=['POST'])
-def create():
-    intern = Intern(
-        name=request.form['name'],
-        group=request.form['group'],
-        year=request.form['year'],
-        head_teacher=request.form['head_teacher'],
-        score=request.form['score'],
-        place=request.form['place']
-    )
-    print(intern)
-
-    try:
-        db.session.add(intern)
-        db.session.commit()
-        return redirect('/intern/all')
-    except Exception as e:
-        print(str(e))
-
-    return "", 200
 
 
 @intern.route('/intern/<int:id>/force/', methods=['GET', 'POST'])
@@ -216,6 +200,38 @@ def upload_interns():
         return render_template('intern/load_interns.html')
 
 
+@intern.route('/intern/letter/download/<filename>', methods=['POST', 'GET'])
+def download_letter(filename):
+    full_path = os.path.join(current_app.config['SERVER_PATH'], filename)
+    print(f"[DEBUG] Пытаемся скачать: {full_path}")
+    if not os.path.exists(full_path):
+        print("[DEBUG] Файл не найден")
+
+    return send_from_directory(
+        current_app.config['SERVER_PATH'],
+        filename,
+        as_attachment=True
+    )
+
+@intern.route('/intern/letter/delete', methods=['POST', 'GET'])
+def clear_uploads_folder():
+    folder = current_app.config['SERVER_PATH']
+
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            flash(str(e), 'danger')
+            print(f"Ошибка при удалении файла {file_path}: {e}")
+            return redirect('/intern/all')
+
+    flash('Письма удалены', 'success')
+    return redirect('/intern/all')
+
+# API для приложения
+
 @intern.route('/intern/login', methods=['GET', 'POST'])
 def login():
     data = request.get_json()
@@ -283,8 +299,6 @@ def post_intern():
         return jsonify({"success": False, "message": "Пользователь не найден"}), 401
 
 
-from flask import request
-
 @intern.route('/intern/letter', methods=['GET', 'POST'])
 def get_letter():
     if 'id' not in request.form:
@@ -338,34 +352,3 @@ def save_letter(intern_id, picture):
             return jsonify({"success": False, "message": "Invalid file"}), 400
     except UnidentifiedImageError:
         return jsonify({"success": False, "message": "Invalid file"}), 400
-
-
-@intern.route('/intern/letter/download/<filename>', methods=['POST', 'GET'])
-def download_letter(filename):
-    full_path = os.path.join(current_app.config['SERVER_PATH'], filename)
-    print(f"[DEBUG] Пытаемся скачать: {full_path}")
-    if not os.path.exists(full_path):
-        print("[DEBUG] Файл не найден")
-
-    return send_from_directory(
-        current_app.config['SERVER_PATH'],
-        filename,
-        as_attachment=True
-    )
-
-@intern.route('/intern/letter/delete', methods=['POST', 'GET'])
-def clear_uploads_folder():
-    folder = current_app.config['SERVER_PATH']
-
-    for filename in os.listdir(folder):
-        file_path = os.path.join(folder, filename)
-        try:
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-        except Exception as e:
-            flash(str(e), 'danger')
-            print(f"Ошибка при удалении файла {file_path}: {e}")
-            return redirect('/intern/all')
-
-    flash('Письма удалены', 'success')
-    return redirect('/intern/all')
