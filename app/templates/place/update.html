@@ -1,0 +1,29 @@
+{% extends 'main/base.html' %}
+
+{% block title %}
+Редактирование
+{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/form.css') }}">
+{% endblock %}
+
+{% block content %}
+<form method="post" class="edit-form">
+    <input name="title" type="text" value="{{ place.title }}" placeholder="Компания">
+    <input name="places" type="text" value="{{ place.places }}" placeholder="Текущее количество мест">
+    <input name="max_places" type="text" value="{{ place.max_places }}" placeholder="Максимальное количество мест">
+
+    <textarea name="occupation" placeholder="Специальность (опционально)" rows="3">{{ place.occupation or '' }}</textarea>
+    <textarea name="requirements" placeholder="Требования (опционально)" rows="3">{{ place.requirements or '' }}</textarea>
+    <textarea name="outlook" placeholder="Перспективы (опционально)" rows="3">{{ place.outlook or '' }}</textarea>
+    <textarea name="contacts" placeholder="Контакты (опционально)" rows="3">{{ place.contacts or '' }}</textarea>
+
+    <input value="Обновить" type="submit" class="btn-green">
+</form>
+
+<div class="actions">
+  <a href="{{ url_for('place.all') }}" class="btn-link">Посмотреть все</a>
+  <a href="{{ url_for('place.delete', id=place.id) }}" class="btn-red">Удалить</a>
+</div>
+{% endblock %}

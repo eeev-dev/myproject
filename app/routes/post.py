@@ -7,7 +7,7 @@ from ..models.post import Post
 post = Blueprint('post', __name__)
 
 
-@post.route('/', methods=['GET', 'POST'])
+@post.route('/post', methods=['GET', 'POST'])
 def all():
     posts = Post.query.order_by(Post.date).all()
     return render_template('post/all.html', posts=posts)

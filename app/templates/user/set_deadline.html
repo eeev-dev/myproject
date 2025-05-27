@@ -1,0 +1,14 @@
+{% extends 'main/base.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/date_form.css') }}">
+{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('user.set_deadline') }}">
+    <label for="deadline">Дедлайн:</label>
+    <input type="datetime-local" id="deadline" name="deadline" class="deadline-picker"
+           value="{{ value|default('', true)|replace(' ', 'T') }}">
+    <button type="submit" class="deadline">Установить</button>
+</form>
+{% endblock %}

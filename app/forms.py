@@ -1,14 +1,16 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
 from wtforms import StringField, PasswordField, SubmitField, FileField, BooleanField
-from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Regexp
 
 from .models.user import User
 
 
 class RegistrationForm(FlaskForm):
-    name = StringField('ФИО', validators=[DataRequired(), Length(2, 100)])
-    avatar = FileField('Загрузите свое фото', validators=[FileAllowed(['jpg', 'jpeg', 'png'])])
+    name = StringField('Фамилия И. О.', validators=[
+        DataRequired(),
+        Length(2, 100),
+        Regexp(r'^[А-ЯЁ][а-яё]+ [А-Я]\. [А-Я]\.$', message="Введите имя в формате: Фамилия И. О.")])
     login = StringField('Логин', validators=[DataRequired(), Length(2, 20)])
     password = PasswordField('Пароль', validators=[DataRequired()])
     confirm_password = PasswordField('Подтвердите пароль', validators=[DataRequired(), EqualTo('password')])

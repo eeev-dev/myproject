@@ -1,0 +1,21 @@
+{% extends 'main/base.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/form.css') }}">
+{% endblock %}
+
+{% block content %}
+<form method="post" class="edit-form">
+    <select name="place" class="styled-select">
+        {% for place in places %}
+        <option value="{{ place }}">{{ place }}</option>
+        {% endfor %}
+    </select>
+    <input value="Подтвердить" type="submit" class="btn-green">
+    <input name="name" value="{{ intern.name }}" type="text" placeholder="ФИО студента" class="form_control">
+    <input name="group" value="{{ intern.group }}" type="text" placeholder="Группа" class="form_control">
+    <input name="year" value="{{ intern.year }}" type="text" placeholder="Курс" class="form_control">
+    <input name="head_teacher" value="{{ intern.head_teacher }}" type="text" placeholder="Руководитель практики" class="form_control">
+    <input name="gpa" value="{{ intern.score }}" type="text" placeholder="Успеваемость" class="form_control">
+</form>
+{% endblock %}

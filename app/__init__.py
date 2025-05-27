@@ -7,7 +7,9 @@ from .extensions import db, migrate, login_manager
 from .routes.user import user
 from .routes.post import post
 from .routes.intern import intern
-
+from .routes.home import main
+from .routes.place import place
+from .routes.review import review
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -17,6 +19,9 @@ def create_app(config_class=Config):
     app.register_blueprint(user)
     app.register_blueprint(post)
     app.register_blueprint(intern)
+    app.register_blueprint(main)
+    app.register_blueprint(place)
+    app.register_blueprint(review)
 
     db.init_app(app)
     migrate.init_app(app, db)

@@ -1,116 +1,65 @@
-@import url('fonts.css');
-
-header {
-    position: sticky;
-    top: 0;
+.card-container {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    align-items: flex-start;
 }
 
-body {
-    background: #ffffff;
-    color: #212121;
-}
-
-.page {
-    overflow-x: hidden;
+.card {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    justify-content: space-between;
+    text-decoration: none;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    width: 240px;
+    height: 300px;
+    padding: 20px;
+    color: #333;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.content {
-    max-width: 1140px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    flex: 1 1 auto;
+.card:hover {
+    background-color: #2957b2;
+    color: white;
 }
 
-h1 {
-    font-family: Montserrat, sans-serif;
-    font-weight: 400;
+.card:hover .material-icons {
+    color: white;
 }
 
-.header__img {
-    display: block;
-    width: 48px;
-    height: 48px;
+.card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* стили для заголовков */
-
-.custom-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  padding: 12px 24px;
-  background-color: #2957b2;
-  color: white;
+.card-icon {
+    font-size: 48px;
+    color: #2957b2;
+    margin-bottom: 10px;
+    transition: color 0.3s ease;
 }
 
-.left-block {
-  display: flex;
-  align-items: center;
-  gap: 24px;
+.card-title {
+    font-size: 20px;
+    font-weight: bold;
 }
 
-.logo-link img {
-  height: 40px;
-  width: auto;
-  border-radius: 6px;
+.card-center {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 20px 0;
 }
 
-.nav-links {
-  display: flex;
-  gap: 16px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.card-footer {
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: left;
 }
 
-.nav-links a {
-  color: white;
-  text-decoration: none;
-  font-weight: 500;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: background-color 0.3s;
-}
-
-.nav-links a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.auth-block {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.welcome {
-  font-size: 14px;
-}
-
-.btn {
-  background-color: white;
-  color: #2957b2;
-  padding: 8px 14px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: bold;
-  transition: background-color 0.3s;
-}
-
-.btn:hover {
-  background-color: #f0f0f0;
-}
-
-.btn.outline {
-  background-color: transparent;
-  border: 2px solid white;
-  color: white;
-}
-
-.btn.outline:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+.card:hover .card-footer {
+    color: white;
 }

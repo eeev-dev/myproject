@@ -1,36 +1,78 @@
 {% extends 'main/base.html' %}
 
-{% block style %}<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/intern_table.css') }}">{% endblock %}
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/intern_table.css') }}">
+{% endblock %}
+
+{% block script %}
+<script src="{{ url_for('static', filename='js/blocks/clickable_row.js') }}"></script>
+{% endblock %}
+
 
 {% block content %}
-<div class="table-responsive custom-table-responsive">
+<div>
+    <div class="filter-bar">
+        <a href="{{ url_for('intern.all', filter='none') }}" class="filter-option">Без заявки</a>
+        <a href="{{ url_for('intern.all', filter='pending') }}" class="filter-option">Ожидают подтверждения</a>
+        <a href="{{ url_for('intern.all', filter='confirmed') }}" class="filter-option">Подтверждены</a>
+    </div>
     <table>
-    <thead>
-      <tr>
-        <th>Студент</th>
-        <th>Группа</th>
-        <th>Место практики</th>
-        <th>Места</th>
-        <th>Курс</th>
-        <th>Руководитель практики</th>
-        <th>Баллы</th>
-        <th>Действие</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for intern in interns %}
-      <tr>
-        <td>{{ intern.name }}</td>
-        <td>{{ intern.group }}</td>
-        <td>{{ intern.place }}</td>
-        <td>{{ intern.places }}</td>
-        <td>{{ intern.year }}</td>
-        <td>{{ intern.head_teacher }}</td>
-        <td>{{ intern.score }}</td>
-        <td><a href="#" class="btn">Подтвердить</a></td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+        <thead>
+        <tr>
+            <th>Студент</th>
+            <th>Группа</th>
+            {% if current_filter != 'none' %}
+            <th>
+                <a href="{{ url_for('place.all') }}">Место практики</a> <a href="{{ url_for('place.add') }}"> + </a>
+            </th>
+            {% endif %}
+            <th>Курс</th>
+            <th>Баллы</th>
+            {% if current_filter != 'none' %}
+            <th>Действие</th>
+            {% endif %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for intern in interns %}
+        {% if current_filter == 'none' %}
+        <tr class="clickable-row" data-href="{{ url_for('intern.force', id=intern.id) }}">
+        {% else %}
+        <tr>
+        {% endif %}
+            <td>{{ intern.name }}</td>
+            <td>{{ intern.group }}</td>
+            {% if current_filter != 'none' %}
+            <td>
+                {% if intern.place == 'Свое место практики'%}
+                <form method="post" action="{{ url_for('intern.download_letter', filename=intern.letter) }}" style="display:inline;">
+                    <button type="submit" class="btn">
+                        {{ intern.place }}
+                    </button>
+                </form>
+                {% else %}
+                {{ intern.place }}
+                {% endif %}
+            </td>
+            {% endif %}
+            <td>{{ intern.year }}</td>
+            <td>{{ intern.score }}</td>
+            {% if current_filter != 'none' %}
+            <td> {% if intern.status == 'Ожидает подтверждения' %}
+                <form method="post" action="{{ url_for('intern.upgrade_status', id=intern.id) }}" style="display:inline;">
+                    <button type="submit" class="btn">Подтвердить</button>
+                </form>
+                {% elif intern.status == 'Подтвержден'%}
+                <form method="post" action="{{ url_for('intern.downgrade_status', id=intern.id) }}"
+                      style="display:inline;">
+                    <button type="submit" class="btn-red">Отмена</button>
+                </form>
+                {% endif %}
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

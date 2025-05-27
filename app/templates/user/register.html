@@ -5,7 +5,7 @@
 {% block content %}
 <form method="POST" enctype="multipart/form-data" class="form-control d-flex flex-column gap-2">
     {{ form.csrf_token }}
-    {{ form.name(class="form-control", placeholder="ФИО") }}
+    {{ form.name(class="form-control", placeholder="Фамилия И. О.") }}
 
     {{ form.login(class="form-control", placeholder="Логин") }}
     {% if form.login.errors %}
@@ -16,7 +16,6 @@
         </div>
     {% endif %}
 
-    {{ form.avatar(class="form-control") }}
     {{ form.password(class="form-control", placeholder="Пароль") }}
     {{ form.confirm_password(class="form-control", placeholder="Подтверждение пароля") }}
     {{ form.submit(class="btn btn-success") }}

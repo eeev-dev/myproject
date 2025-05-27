@@ -33,7 +33,7 @@ thead tr th:last-child {
 td {
     background-color: white;
     padding: 12px;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 tr {
@@ -51,17 +51,81 @@ tr td:last-child {
     border-bottom-right-radius: 12px;
 }
 
-.btn {
+.btn, .btn-red, th a, .btn-green, .btn-yellow {
     display: inline-block;
     padding: 8px 16px;
     background-color: #2957b2;
     color: white;
     text-decoration: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 16px;
     transition: background-color 0.3s ease;
+    border: none;
 }
 
-.btn:hover {
+.btn:hover, th:hover {
     background-color: #1e429f;
+    color: white;
+}
+
+.btn-red {
+    background-color: #e03a3a;
+}
+
+.btn-red:hover {
+    background-color: #c62828;
+}
+
+.btn-green {
+    background-color: #34C759;
+}
+
+.btn-yellow {
+    background-color: #F5B800;
+}
+
+.btn-yellow:hover {
+    background-color: #D9A300;
+}
+
+.btn-green:hover {
+    background-color: #28A745;
+}
+
+.ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.clickable-row:hover {
+    background-color: #f0f0f0;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.filter-option {
+    padding: 0.5rem 1.2rem;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    background-color: #f9f9f9;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.filter-option:hover {
+    background-color: #2957b2;
+    color: white;
+    border-color: #2957b2;
 }

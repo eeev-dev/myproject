@@ -1,0 +1,88 @@
+.edit-form {
+  max-width: 600px;
+  margin: 2rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.edit-form input[type="text"],
+.edit-form textarea {
+  width: 500px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.edit-form input[type="text"]:focus,
+.edit-form textarea:focus {
+  border-color: #2957b2;
+}
+
+.edit-form .btn-green {
+  background-color: #2957b2;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.edit-form .btn-green:hover {
+  background-color: #1e4692;
+}
+
+.actions {
+  max-width: 600px;
+  margin: 1rem auto;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn-link {
+  padding: 8px 16px;
+  background: #e0e0e0;
+  color: #333;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background 0.3s;
+}
+
+.btn-link:hover {
+  background: #ccc;
+}
+
+.btn-red {
+  background-color: #e03a3a;
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background-color 0.3s;
+}
+
+.btn-red:hover {
+  background-color: #c62828;
+}
+
+.styled-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: border 0.3s ease;
+}
+
+.styled-select:focus {
+  border-color: #4f46e5; /* индиго */
+  outline: none;
+}
+

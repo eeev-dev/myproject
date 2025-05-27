@@ -2,13 +2,12 @@ import os
 
 class Config(object):
     APPNAME = 'app'
-    ROOT = os.path.abspath(APPNAME)
-    UPLOAD_PATH = '/static/uploads/'
-    SERVER_PATH = ROOT + UPLOAD_PATH
+    ROOT = os.path.dirname(os.path.abspath(__file__))
+    SERVER_PATH = os.path.join(ROOT, 'static', 'uploads')
 
     USER = os.environ.get('POSTGRES_USER', 'zebra')
     PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'zebra')
-    HOST = os.environ.get('POSTGRES_HOST', 'localhost')
+    HOST = os.environ.get('POSTGRES_HOST', 'postgres')
     PORT = int(os.environ.get('POSTGRES_PORT', 5432))
     DB = os.environ.get('POSTGRES_DB', 'mydb')
 

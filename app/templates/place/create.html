@@ -1,0 +1,26 @@
+{% extends 'main/base.html' %}
+
+{% block title %}
+Добавить предприятие
+{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/form.css') }}">
+{% endblock %}
+
+{% block content %}
+<form method="post" class="edit-form">
+    <input name="title" type="text" placeholder="Компания" class="form_control">
+    <input name="places" type="text" placeholder="Количество мест" class="form_control">
+
+    <textarea name="occupation" placeholder="Специальность (опционально)" class="form_control" rows="3"></textarea>
+    <textarea name="requirements" placeholder="Требования (опционально)" class="form_control" rows="3"></textarea>
+    <textarea name="outlook" placeholder="Перспективы (опционально)" class="form_control" rows="3"></textarea>
+    <textarea name="contacts" placeholder="Контакты (опционально)" class="form_control" rows="3"></textarea>
+
+    <input value="Добавить" type="submit" class="btn-green">
+</form>
+<a href ="{{ url_for('place.all') }}" class="btn-link">
+    Посмотреть все
+</a>
+{% endblock %}

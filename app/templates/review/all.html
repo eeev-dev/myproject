@@ -1,0 +1,32 @@
+{% extends 'main/base.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/review_card.css') }}">
+{% endblock %}
+
+{% block content %}
+<form method="get" class="edit-form">
+  <select name="place_id" class="styled-select" onchange="this.form.submit()">
+    <option value="">Все места</option>
+    {% for place in places %}
+      <option value="{{ place.id }}" {% if place.id|string == request.args.get('place_id') %}selected{% endif %}>
+        {{ place.title }}
+      </option>
+    {% endfor %}
+  </select>
+</form>
+{% for review in reviews %}
+<div class="masonry">
+    <div class="review-card">
+        <div class="review-header">
+            <div class="review-rating">⭐ {{ review.rating }} / 5 </div>
+            <form class="delete-form" method="POST" action="{{ url_for('review.delete', id=review.id) }}">
+                <button type="submit" class="btn">Удалить</button>
+            </form>
+        </div>
+        <div class="review-text">{{ review.text }}</div>
+        <div class="review-date">{{ review.date }}</div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

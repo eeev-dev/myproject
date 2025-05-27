@@ -1,0 +1,36 @@
+{% extends 'main/base.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">{% endblock %}
+
+{% block content %}
+<div class="card-container">
+    <a href="{{ url_for('intern.all') }}" class="card">
+        <div class="card-header">
+            <div class="card-title"> {{interns_with_request}}/{{all}} </div>
+        </div>
+
+        <div class="card-center">
+            Практика
+        </div>
+
+        <div class="card-footer">
+            <div>Ожидают подтверждения: <strong>{{pending_interns}}</strong></div>
+        </div>
+    </a>
+    <a href="{{ url_for('post.all') }}" class="card">
+        <div class="card-header">
+            <div class="card-title"> 23/45 </div>
+        </div>
+
+        <div class="card-center">
+            ВКР
+        </div>
+
+        <div class="card-footer">
+            <div>Новых заявок: <strong>0</strong></div>
+            <div>Ожидают подтверждения: <strong>0</strong></div>
+        </div>
+    </a>
+</div>
+{% endblock %}

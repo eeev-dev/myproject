@@ -1,0 +1,36 @@
+{% extends 'main/base.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/intern_table.css') }}">{% endblock %}
+
+{% block script %}
+<script src="{{ url_for('static', filename='js/blocks/clickable_row.js') }}"></script> {% endblock %}
+
+{% block content %}
+<div>
+    <table>
+        <thead>
+        <tr>
+            <th>Название</th>
+            <th>Занятие</th>
+            <th>Места</th>
+            <th>Требования</th>
+            <th>Перспективы</th>
+            <th>Контакты</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for place in places %}
+        <tr class="clickable-row" data-href="{{ url_for('place.update', id=place.id) }}">
+            <td>{{ place.title }}</td>
+            <td class="ellipsis">{{ place.occupation }}</td>
+            <td>{{ place.places }}</td>
+            <td class="ellipsis">{{ place.requirements }}</td>
+            <td class="ellipsis">{{ place.outlook }}</td>
+            <td class="ellipsis">{{ place.contacts }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

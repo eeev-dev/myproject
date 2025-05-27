@@ -6,4 +6,6 @@ COPY . /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY template.docx /app/static/files/template.docx
+
 CMD ["gunicorn", "run:application", "-c", "gunicorn_config.py"]
