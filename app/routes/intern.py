@@ -232,6 +232,10 @@ def clear_uploads_folder():
 
 # API для приложения
 
+@intern.route('/ping', methods=['GET', 'POST'])
+def ping():
+    return "", 200
+
 @intern.route('/intern/login', methods=['GET', 'POST'])
 def login():
     data = request.get_json()
