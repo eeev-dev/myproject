@@ -1,8 +1,10 @@
+import os
 from datetime import datetime
 
 from flask import Blueprint, render_template, redirect, flash, url_for, request
 from flask_login import login_user, logout_user, current_user
 
+from ..functions import create_doc
 from ..models.intern import Intern
 from ..forms import RegistrationForm, LoginForm
 from ..extensions import db, bcrypt
@@ -67,3 +69,35 @@ def set_deadline():
         return redirect(url_for('intern.all'))  # или другой нужный маршрут
     else:
         return render_template('user/set_deadline.html', value=current_user.practice_deadline)
+
+@user.route('/user/report', methods=['GET', 'POST'])
+def report():
+    if request.method == 'POST':
+        filter_year = int(request.form['filter_year'])
+        year = request.form['year']
+        group = request.form['group']
+        duration = request.form['duration']
+        head_teacher = current_user.name
+
+        interns = (Intern.query
+                   .filter_by(head_teacher=head_teacher)
+                   .filter_by(year=filter_year)
+                   .filter_by(group=group)
+                   .filter_by(status='Подтвержден')
+                   .all())
+
+        doc = Document('app/static/files/template.docx')
+
+        create_doc(doc, interns)
+
+        output = BytesIO()
+        doc.save(output)
+        output.seek(0)
+
+        return send_file(output,
+                         as_attachment=True,
+                         download_name=f'Произв.практика_{year}_{group}.docx',
+                         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
+    else:
+        return render_template('user/report.html')
