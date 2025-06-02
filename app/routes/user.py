@@ -65,10 +65,16 @@ def set_deadline():
     if request.method == 'POST':
         dt_str = request.form['deadline']  # формат: '2025-05-20T14:30'
         current_user.practice_deadline = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M')
+        if current_user.practice_deadline is not None:
+            if datetime.utcnow() < current_user.practice_deadline:
+                for intern in Intern.query.filter_by(head_teacher=current_user.name).filter_by(
+                        status='Выбор кафедры').all():
+                    intern.status = 'Без заявки'
         db.session.commit()
         return redirect(url_for('intern.all'))  # или другой нужный маршрут
     else:
         return render_template('user/set_deadline.html', value=current_user.practice_deadline)
+
 
 @user.route('/user/report', methods=['GET', 'POST'])
 def report():
