@@ -357,7 +357,7 @@ def save_letter(intern_id, picture):
 
 @intern.route('/download-uploads')
 def download_uploads():
-    uploads_dir = 'uploads'
+    uploads_dir = current_app.config['SERVER_PATH']
 
     # Проверим, что папка существует
     if not os.path.exists(uploads_dir):
