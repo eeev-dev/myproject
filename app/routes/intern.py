@@ -4,7 +4,8 @@ from datetime import datetime
 import os
 import secrets
 import time
-from flask import request
+from flask import request, send_file
+import zipfile
 from fileinput import filename
 
 from flask import current_app, jsonify, send_from_directory
@@ -352,3 +353,30 @@ def save_letter(intern_id, picture):
             return jsonify({"success": False, "message": "Invalid file"}), 400
     except UnidentifiedImageError:
         return jsonify({"success": False, "message": "Invalid file"}), 400
+
+
+@intern.route('/download-uploads')
+def download_uploads():
+    uploads_dir = 'uploads'
+
+    # Проверим, что папка существует
+    if not os.path.exists(uploads_dir):
+        return "Папка uploads не найдена.", 404
+
+    # Создаем архив в оперативной памяти
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for root, _, files in os.walk(uploads_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, uploads_dir)
+                zip_file.write(file_path, arcname)
+
+    zip_buffer.seek(0)
+
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='uploads.zip'
+    )
