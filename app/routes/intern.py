@@ -240,6 +240,7 @@ def upload_interns():
 
         for student in students:
             intern = Intern(
+                student_id=student.id,
                 name = student.name,
                 group = student.group,
                 year = group.year,

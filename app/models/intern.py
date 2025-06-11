@@ -6,6 +6,7 @@ from ..extensions import db
 
 class Intern(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer)
     name = db.Column(db.String(50))
     place = db.Column(db.String(70))
     group = db.Column(db.String(50))

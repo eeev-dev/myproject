@@ -240,6 +240,7 @@ def upload_graduates():
 
     for student in students:
         graduate = Graduate(
+            student_id=student.id,
             name = student.name,
             group = student.group,
             status = 'Без заявки'
