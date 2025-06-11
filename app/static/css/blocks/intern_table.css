@@ -107,6 +107,25 @@ tr td:last-child {
     background-color: #f0f0f0;
 }
 
+/* Фильтры */
+
+.sections {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.section {
+    padding: 0.5rem 1.2rem;
+    border-radius: 20px;
+    background-color: #2957b2;
+    text-decoration: none;
+    color: white;
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s;
+}
+
 .filter-bar {
     display: flex;
     gap: 1rem;

@@ -8,7 +8,6 @@
 <script src="{{ url_for('static', filename='js/blocks/clickable_row.js') }}"></script>
 {% endblock %}
 
-
 {% block content %}
 <div>
     <div class="filter-bar">
@@ -75,4 +74,25 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block footer %}
+<ul class="nav justify-content-center border-bottom pb-3 mb-3">
+    <a href="{{ url_for('user.set_deadline') }}" class="logo-link">
+        <img class="btn-red" src="{{ url_for('static', filename='img/clock.png')}}" alt="deadline">
+    </a>
+    <a href="{{ url_for('user.report') }}" class="logo-link">
+        <img class="btn" src="{{ url_for('static', filename='img/download_document.png')}}" alt="deadline">
+    </a>
+    <a href="{{ url_for('intern.upload_interns') }}" class="logo-link">
+        <img class="btn-green" src="{{ url_for('static', filename='img/upload_users.png')}}" alt="deadline">
+    </a>
+    <a href="{{ url_for('intern.clear_uploads_folder') }}" class="logo-link">
+        <img class="btn-yellow" src="{{ url_for('static', filename='img/delete_images.png')}}" alt="deadline">
+    </a>
+    <a href="{{ url_for('review.all') }}" class="logo-link">
+        <img class="btn-purple" src="{{ url_for('static', filename='img/reviews.png')}}" alt="deadline">
+    </a>
+</ul>
+<p class="text-center">© 2025 Company, Inc</p>
 {% endblock %}

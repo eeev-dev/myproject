@@ -1,0 +1,21 @@
+{% extends 'main/base.html' %}
+
+{% block title %}
+Редактирование
+{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/form.css') }}">
+{% endblock %}
+
+{% block content %}
+<form method="post" class="edit-form">
+    <input name="title" type="text" value="{{ standart.title }}" placeholder="Тема">
+    <input value="Обновить" type="submit" class="btn-green">
+</form>
+
+<div class="actions">
+  <a href="{{ url_for('standart.all') }}" class="btn-link">Посмотреть все</a>
+  <a href="{{ url_for('standart.delete', id=standart.id) }}" class="btn-red">Удалить</a>
+</div>
+{% endblock %}

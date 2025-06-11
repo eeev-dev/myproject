@@ -1,0 +1,18 @@
+{% extends 'admin/admin.html' %}
+
+{% block content %}
+<div class="content">
+    <div class="form-wrapper">
+        <form method="post" class="edit-form">
+            <input name="id" value="{{ teacher.id }}" type="text" placeholder="ID" class="form_control">
+            <input name="name" value="{{ teacher.name }}" type="text" placeholder="ФИО преподавателя" class="form_control">
+            <input name="url" value="{{ teacher.url }}" type="text" placeholder="Ссылка на конференцию" class="form_control">
+            <input value="Подтвердить" type="submit" class="btn-green">
+        </form>
+
+        <form method="post" action="" class="delete-form">
+            <button type="submit" class="btn-red">Удалить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

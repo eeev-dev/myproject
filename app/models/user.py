@@ -16,3 +16,5 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(200))
     practice_deadline = db.Column(db.DateTime)
     vkr_deadline = db.Column(db.DateTime)
+    supervisor_deadline = db.Column(db.DateTime)
+    role = db.Column(db.String(50))

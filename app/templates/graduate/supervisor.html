@@ -1,0 +1,81 @@
+{% extends 'main/base.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/intern_table.css') }}">
+{% endblock %}
+
+{% block script %}
+<script src="{{ url_for('static', filename='js/blocks/clickable_row.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div>
+    <div class="sections">
+        <a href="{{ url_for('vkr.supervisor') }}" class="section">Научный руководитель</a>
+        <a href="{{ url_for('vkr.topic') }}" class="section">Тема</a>
+    </div>
+    <div class="filter-bar">
+        <a href="{{ url_for('vkr.supervisor', filter='none') }}" class="filter-option">Без заявки</a>
+        <a href="{{ url_for('vkr.supervisor', filter='pending') }}" class="filter-option">Ожидают подтверждения</a>
+        <a href="{{ url_for('vkr.supervisor', filter='confirmed') }}" class="filter-option">Подтверждены</a>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th>Студент</th>
+            <th>Группа</th>
+            <th>Руководитель</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for graduate in graduates %}
+        <tr>
+            <td>{{ graduate.name }}</td>
+            <td>{{ graduate.group }}</td>
+            <td>
+            {% if graduate.status == 'Без заявки' %}
+                <form method="post" action="{{ url_for('vkr.force_supervisor', id=graduate.id) }}" style="display:inline;">
+                    <button type="submit" class="btn">Выбрать</button>
+                </form>
+            {% elif graduate.status == 'Ожидает подтверждения' %}
+                <form method="post" action="{{ url_for('vkr.upgrade_status', id=graduate.id) }}" style="display:inline;">
+                    <button type="submit" class="btn">Подтвердить</button>
+                </form>
+                <form method="post" action="{{ url_for('vkr.downgrade_status', id=graduate.id) }}"
+                      style="display:inline;">
+                    <button type="submit" class="btn-red">Отмена</button>
+                </form>
+            {% elif graduate.status == 'Подтвержден'%}
+                <form method="post" action="{{ url_for('vkr.downgrade_status', id=graduate.id) }}"
+                      style="display:inline;">
+                    <button type="submit" class="btn-red">Отмена</button>
+                </form>
+            {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block footer %}
+<ul class="nav justify-content-center border-bottom pb-3 mb-3">
+    <a href="{{ url_for('user.set_deadline') }}" class="logo-link">
+        <img class="btn-red" src="{{ url_for('static', filename='img/clock.png')}}" alt="deadline">
+    </a>
+    <a href="{{ url_for('user.report') }}" class="logo-link">
+        <img class="btn" src="{{ url_for('static', filename='img/download_document.png')}}" alt="deadline">
+    </a>
+    <a href="{{ url_for('vkr.upload_graduates') }}" class="logo-link">
+        <img class="btn-green" src="{{ url_for('static', filename='img/upload_users.png')}}" alt="deadline">
+    </a>
+    <a href="{{ url_for('intern.clear_uploads_folder') }}" class="logo-link">
+        <img class="btn-yellow" src="{{ url_for('static', filename='img/delete_images.png')}}" alt="deadline">
+    </a>
+    <a href="{{ url_for('review.all') }}" class="logo-link">
+        <img class="btn-purple" src="{{ url_for('static', filename='img/reviews.png')}}" alt="deadline">
+    </a>
+</ul>
+<p class="text-center">© 2025 Company, Inc</p>
+{% endblock %}

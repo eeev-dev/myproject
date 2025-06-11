@@ -8,7 +8,7 @@
       <li><a href="{{ url_for('main.home') }}">Главная</a></li>
       {% if current_user.is_authenticated %}
         <li><a href="{{ url_for('intern.all') }}">Практика</a></li>
-        <li><a href="{{ url_for('post.all') }}">ВКР</a></li>
+        <li><a href="{{ url_for('vkr.supervisor') }}">ВКР</a></li>
       {% endif %}
     </ul>
   </div>

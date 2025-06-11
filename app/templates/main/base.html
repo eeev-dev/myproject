@@ -16,7 +16,7 @@
         <h1>{{ self.title() }}</h1>
         {% block content %} {% endblock %}
     </main>
-    <footer class="py-3 my-4"> {% include 'main/_footer.html' %}</footer>
+    {% block footer %} {% endblock %}
 </div>
 
 <script src="{{ url_for('static', filename='js/libs/bootstrap.min.js') }}"></script>

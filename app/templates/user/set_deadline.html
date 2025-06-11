@@ -5,10 +5,24 @@
 {% endblock %}
 
 {% block content %}
-<form method="POST" action="{{ url_for('user.set_deadline') }}">
-    <label for="deadline">Дедлайн:</label>
+<form method="POST" action="{{ url_for('user.set_deadline', param='practice') }}">
+    <label for="deadline">Практика:</label>
     <input type="datetime-local" id="deadline" name="deadline" class="deadline-picker"
-           value="{{ value|default('', true)|replace(' ', 'T') }}">
+           value="{{ value[0]|default('', true)|replace(' ', 'T') }}">
+    <button type="submit" class="deadline">Установить</button>
+</form>
+
+<form method="POST" action="{{ url_for('user.set_deadline', param='supervisor') }}">
+    <label for="deadline">Научный руководитель:</label>
+    <input type="datetime-local" id="deadline" name="deadline" class="deadline-picker"
+           value="{{ value[1]|default('', true)|replace(' ', 'T') }}">
+    <button type="submit" class="deadline">Установить</button>
+</form>
+
+<form method="POST" action="{{ url_for('user.set_deadline', param='vkr') }}">
+    <label for="deadline">Тема ВКР:</label>
+    <input type="datetime-local" id="deadline" name="deadline" class="deadline-picker"
+           value="{{ value[2]|default('', true)|replace(' ', 'T') }}">
     <button type="submit" class="deadline">Установить</button>
 </form>
 {% endblock %}

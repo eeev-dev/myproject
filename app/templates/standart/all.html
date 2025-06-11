@@ -1,0 +1,26 @@
+{% extends 'main/base.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/intern_table.css') }}">{% endblock %}
+
+{% block script %}
+<script src="{{ url_for('static', filename='js/blocks/clickable_row.js') }}"></script> {% endblock %}
+
+{% block content %}
+<div>
+    <table>
+        <thead>
+        <tr>
+            <th>Названиe</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for s in standarts %}
+        <tr class="clickable-row" data-href="{{ url_for('standart.update', id=s.id) }}">
+            <td>{{ s.title }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'admin/admin.html' %}
+
+{% block content %}
+<div class="content">
+    <div class="form-wrapper">
+        <form method="post" class="edit-form">
+            <input name="id" value="{{ group.id }}" type="text" placeholder="ID" class="form_control">
+            <input name="title" value="{{ group.title }}" type="text" placeholder="Название группы" class="form_control">
+            <input name="year" value="{{ group.year }}" type="text" placeholder="Год обучения" class="form_control">
+            <input name="head_teacher" value="{{ group.head_teacher }}" type="text" placeholder="Руководитель практики" class="form_control">
+            <input value="Подтвердить" type="submit" class="btn-green">
+        </form>
+
+        <form method="post" action="" class="delete-form">
+            <button type="submit" class="btn-red">Удалить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'main/base.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/form.css') }}">
+{% endblock %}
+
+{% block content %}
+<form method="post" class="edit-form">
+    <select name="topic" class="styled-select">
+        {% for topic in topics %}
+        <option value="{{ topic }}">{{ topic }}</option>
+        {% endfor %}
+    </select>
+    <input value="Подтвердить" type="submit" class="btn-green">
+    <input name="name" value="{{ graduate.name }}" type="text" placeholder="ФИО студента" class="form_control">
+    <input name="group" value="{{ graduate.group }}" type="text" placeholder="Группа" class="form_control">
+</form>
+{% endblock %}

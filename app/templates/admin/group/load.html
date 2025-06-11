@@ -1,0 +1,26 @@
+{% extends 'admin/admin.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/load_file.css') }}">
+{% endblock %}
+
+{% block title %} Загрузить список групп {% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <p>Подготовьте файл следующего вида:</p>
+
+    <p>
+        <a class="download-link" href="{{ url_for('static', filename='files/data.csv') }}" download>
+            Скачать пример файла
+        </a>
+    </p>
+
+    <p>Затем загрузите его через форму и нажмите кнопку:</p>
+
+    <form action="{{ url_for('admin.upload_groups') }}" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".csv" required>
+        <button type="submit">Загрузить</button>
+    </form>
+</div>
+{% endblock %}

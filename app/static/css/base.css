@@ -134,6 +134,20 @@ ul a {
     border: none;
 }
 
+.btn-login {
+    display: block;
+    padding: 8px 16px;
+    margin: 12px;
+    background-color: #34C759;
+    text-align: center;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    border: none;
+}
+
 .btn:hover, th:hover {
     background-color: #1e429f;
     color: white;

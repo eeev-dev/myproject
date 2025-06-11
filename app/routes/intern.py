@@ -14,10 +14,13 @@ from PIL import Image, UnidentifiedImageError
 from flask import Blueprint, render_template, request, redirect, jsonify, flash
 from flask_login import login_required, current_user
 from flask_wtf import file
+from sqlalchemy import text
 from sqlalchemy import desc, or_
 
 from ..models.user import User
 from ..models.intern import Intern
+from ..models.student import Student
+from ..models.group import Group
 from ..models.place import Place
 from ..extensions import db
 
@@ -80,7 +83,7 @@ def all():
     return render_template('intern/all.html', interns=interns, current_filter=filter_param)
 
 
-@intern.route('/intern/<int:id>/force/', methods=['GET', 'POST'])
+@intern.route('/intern/<int:id>/force', methods=['GET', 'POST'])
 def force(id):
     intern = Intern.query.get_or_404(id)
     places = [p[0] for p in db.session.query(Place.title).filter(Place.places > 0).all()]
@@ -165,41 +168,7 @@ def downgrade_status(id):
         flash(str(e), 'danger')
         print(str(e))
         return redirect('/intern/all')
-
-
-@intern.route('/intern/load', methods=['GET', 'POST'])
-@login_required
-def upload_interns():
-    if request.method == 'POST':
-        file = request.files.get('file')
-
-        if not file or not file.filename.endswith('.csv'):
-            flash('Загрузите корректный CSV-файл', 'danger')
-
-        # Очистка таблицы
-        db.session.query(Intern).delete()
-
-        # Чтение CSV-файла без сохранения
-        stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
-        reader = csv.reader(stream)
-
-        for row in reader:
-            intern = Intern(
-                name=row[0],
-                group=row[1],
-                year=row[2],
-                student_number=row[3],
-                head_teacher=row[4],
-                score=row[5]
-            )
-            db.session.add(intern)
-
-        db.session.commit()
-        flash("Данные успешно загружены", 'success')
-        return redirect('/intern/all')
-    else:
-        return render_template('intern/load_interns.html')
-
+    
 
 @intern.route('/intern/letter/download/<filename>', methods=['POST', 'GET'])
 def download_letter(filename):
@@ -231,18 +200,78 @@ def clear_uploads_folder():
     flash('Письма удалены', 'success')
     return redirect('/intern/all')
 
+
+@intern.route('/download-uploads')
+def download_uploads():
+    uploads_dir = current_app.config['SERVER_PATH']
+
+    # Проверим, что папка существует
+    if not os.path.exists(uploads_dir):
+        return "Папка uploads не найдена.", 404
+
+    # Создаем архив в оперативной памяти
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for root, _, files in os.walk(uploads_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, uploads_dir)
+                zip_file.write(file_path, arcname)
+
+    zip_buffer.seek(0)
+
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='uploads.zip'
+    )
+
+@intern.route('/intern/upload', methods=['GET'])
+def upload_interns():
+    group = Group.query.filter_by(head_teacher=current_user.name).first()
+    print(current_user.name)
+    if group:
+        # Очистка таблицы
+        db.session.query(Intern).delete()
+        db.session.execute(text("ALTER SEQUENCE intern_id_seq RESTART WITH 1"))
+
+        students = Student.query.filter_by(group=group.title).all()
+
+        for student in students:
+            intern = Intern(
+                name = student.name,
+                group = student.group,
+                year = group.year,
+                head_teacher = current_user.name,
+                score = student.score,
+                status = 'Без заявки'
+            )
+            db.session.add(intern)
+
+        try:
+            db.session.commit()
+            flash('Данные успешно загружены', 'success')
+            return redirect('/intern/all')
+        except Exception as e:
+            flash(str(e), 'danger')
+            return redirect('/intern/all')
+
+    else:
+        flash('Руководитель практики еще не назначен', 'danger')
+        return redirect('/intern/all')
+
 # API для приложения
 
-@intern.route('/intern/login', methods=['GET', 'POST'])
+'''@intern.route('/intern/login', methods=['GET', 'POST'])
 def login():
     data = request.get_json()
     if not data:
         return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
 
-    student_id = data.get('student_id')
-    print(student_id)
-    intern = Intern.query.filter_by(student_number=student_id).first()
-    if intern:
+    student_number = data.get('student_number')
+    student = Student.query.filter_by(student_number=student_number).first()
+    if student:
         return jsonify({
             "success": True,
             "id": intern.id,
@@ -251,7 +280,7 @@ def login():
             "message": "Авторизация успешна"
         }), 200
     else:
-        return jsonify({"success": False, "message": "Пользователь не найден"}), 401
+        return jsonify({"success": False, "message": "Пользователь не найден"}), 401'''
 
 
 @intern.route('/intern/get', methods=['GET', 'POST'])
@@ -353,30 +382,3 @@ def save_letter(intern_id, picture):
             return jsonify({"success": False, "message": "Invalid file"}), 400
     except UnidentifiedImageError:
         return jsonify({"success": False, "message": "Invalid file"}), 400
-
-
-@intern.route('/download-uploads')
-def download_uploads():
-    uploads_dir = current_app.config['SERVER_PATH']
-
-    # Проверим, что папка существует
-    if not os.path.exists(uploads_dir):
-        return "Папка uploads не найдена.", 404
-
-    # Создаем архив в оперативной памяти
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for root, _, files in os.walk(uploads_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, uploads_dir)
-                zip_file.write(file_path, arcname)
-
-    zip_buffer.seek(0)
-
-    return send_file(
-        zip_buffer,
-        mimetype='application/zip',
-        as_attachment=True,
-        download_name='uploads.zip'
-    )

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Методисту</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    {% block style %} {% endblock %}
+    <script src="{{ url_for('static', filename='js/blocks/clickable_row.js') }}"></script>
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <h2>Меню</h2>
+        <ul>
+            <li> <a href="{{ url_for('admin.panel') }}"> Группы </a> </li>
+            <li> <a href="{{ url_for('admin.teachers') }}"> Преподаватели </a> </li>
+            <li>Расписание</li>
+            <li> <a href="{{ url_for('admin.students') }}"> Студенты </a> </li>
+            <li>Темы</li>
+            <li>Расписание экзаменов</li>
+            <li> <a href="{{ url_for('admin.logout') }}">Выйти</a></li>
+        </ul>
+    </div>
+    <main class="main-content">
+    {% include 'main/_flash.html' %}
+    {% block content %} {% endblock %}
+    </main>
+</div>
+</body>
+</html>

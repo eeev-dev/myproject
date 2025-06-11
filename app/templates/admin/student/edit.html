@@ -1,0 +1,20 @@
+{% extends 'admin/admin.html' %}
+
+{% block content %}
+<div class="content">
+    <div class="form-wrapper">
+        <form method="post" class="edit-form">
+            <input name="id" value="{{ student.id }}" type="text" placeholder="ID" class="form_control">
+            <input name="name" value="{{ student.name }}" type="text" placeholder="ФИО" class="form_control">
+            <input name="student_number" value="{{ student.student_number }}" type="text" placeholder="Номер билета" class="form_control">
+            <input name="score" value="{{ student.score }}" type="text" placeholder="Средний балл" class="form_control">
+            <input name="group" value="{{ student.group }}" type="text" placeholder="Группа" class="form_control">
+            <input value="Подтвердить" type="submit" class="btn-green">
+        </form>
+
+        <form method="post" action="" class="delete-form">
+            <button type="submit" class="btn-red">Удалить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+/* Общие стили */
+
+.container {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex: 1;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    background: #ecf0f1;
+    padding: 20px;
+}
+
+.content {
+    flex: 1; /* вытягивает основной контент */
+}
+
+/* Сайдбар */
+
+.sidebar {
+    width: 220px;
+    background-color: #2c3e50;
+    color: white;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar h2 {
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 10px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.sidebar ul li:hover {
+    background-color: #34495e;
+}
+
+.clickable-row:hover {
+    cursor: pointer;
+}
+
+/* стили для формы */
+
+.edit-form,
+.delete-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.edit-form .form_control,
+.edit-form .btn-green,
+.delete-form .btn-red {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.btn-green {
+    background-color: #34C759;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+.btn-green:hover {
+    background-color: #28A745;
+}
+
+.btn-red {
+    background-color: #e03a3a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+.btn-red:hover {
+    background-color: #c62828;
+}

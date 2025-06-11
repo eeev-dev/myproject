@@ -1,0 +1,19 @@
+{% extends 'main/base.html' %}
+
+{% block title %}
+Добавить тему
+{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/form.css') }}">
+{% endblock %}
+
+{% block content %}
+<form method="post" class="edit-form">
+    <input name="title" type="text" placeholder="Полное название" class="form_control">
+    <input value="Добавить" type="submit" class="btn-green">
+</form>
+<a href ="{{ url_for('standart.all') }}" class="btn-link">
+    Посмотреть все
+</a>
+{% endblock %}
