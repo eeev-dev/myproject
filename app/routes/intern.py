@@ -263,26 +263,6 @@ def upload_interns():
 
 # API для приложения
 
-'''@intern.route('/intern/login', methods=['GET', 'POST'])
-def login():
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
-
-    student_number = data.get('student_number')
-    student = Student.query.filter_by(student_number=student_number).first()
-    if student:
-        return jsonify({
-            "success": True,
-            "id": intern.id,
-            "head_teacher": intern.head_teacher,
-            "place": intern.place,
-            "message": "Авторизация успешна"
-        }), 200
-    else:
-        return jsonify({"success": False, "message": "Пользователь не найден"}), 401'''
-
-
 @intern.route('/intern/get', methods=['GET', 'POST'])
 def get_intern():
     data = request.get_json()

@@ -129,7 +129,7 @@ def topic():
 
 @vkr.route('/vkr/check', methods=['POST'])
 def check_unique(id):
-    graduate = Graduate.query.get(id).first()
+    graduate = Graduate.query.get(id)
     title = graduate.topic
     topics = Topic.query.all()
     matches = []

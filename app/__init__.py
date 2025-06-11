@@ -12,6 +12,7 @@ from .routes.review import review
 from .routes.admin import admin
 from .routes.vkr import vkr
 from .routes.standart import standart
+from .routes.student import student
 
 topic = Blueprint('topic', __name__)
 
@@ -29,6 +30,7 @@ def create_app(config_class=Config):
     app.register_blueprint(vkr)
     app.register_blueprint(standart)
     app.register_blueprint(topic)
+    app.register_blueprint(student)
 
     db.init_app(app)
     migrate.init_app(app, db)
