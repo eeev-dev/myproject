@@ -24,10 +24,10 @@
             <tr>
                 <th>Студент</th>
                 <th>Группа</th>
+                {% if current_filter != 'none' %}
                 <th>
                     <a href="{{ url_for('standart.all') }}">Тема</a> <a href="{{ url_for('standart.add') }}"> + </a>
                 </th>
-                {% if current_filter != 'none' %}
                 <th>Действие</th>
                 {% endif %}
             </tr>

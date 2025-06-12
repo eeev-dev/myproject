@@ -46,7 +46,7 @@ def supervisor():
                 graduate.status = 'Выбор кафедры'
             try:
                 db.session.commit()
-                return render_template('graduate/supervisor.html', get_graduates(filter_param), current_filter=filter_param)
+                return render_template('graduate/supervisor.html', graduates=get_graduates(filter_param), current_filter=filter_param)
             except Exception as e:
                 flash(str(e), 'danger')
                 return render_template('graduate/supervisor.html', graduates=[], current_filter=filter_param)
@@ -74,6 +74,7 @@ def upgrade_status(id):
 def downgrade_status(id):
     graduate = Graduate.query.get_or_404(id)
     graduate.status = "Без заявки"
+    graduate.supervisor = None
 
     try:
         db.session.commit()
@@ -92,10 +93,10 @@ def force_supervisor(id):
     try:
         db.session.commit()
         flash(f'Научный руководитель студента {graduate.name}: {graduate.supervisor}', 'success')
-        return render_template('graduate/supervisor.html', current_filter='none')
+        return redirect('/vkr/supervisor')
     except Exception as e:
         flash(str(e), 'danger')
-        return render_template('graduate/supervisor.html', current_filter='none')
+        return redirect('/vkr/supervisor')
     
 
 # Тема
@@ -120,7 +121,7 @@ def topic():
     filter_param = request.args.get('filter', 'pending')
     if current_user.vkr_deadline is not None:
         if datetime.utcnow() > current_user.vkr_deadline:
-            for graduate in Graduate.query.filter_by(supervisor=current_user.name).filter(or_(Graduate.status == 'Без заявки', Graduate.status == 'Ожидает подтверждения')).all():
+            for graduate in Graduate.query.filter_by(supervisor=current_user.name).filter(or_(Graduate.status == 'Ожидает проверки', Graduate.status == "Подтвержден")).all():
                 graduate.status = 'Выбор темы'
                 graduate.message = 'Свяжитесь по поводу темы с научным руководителем'
             db.session.commit()

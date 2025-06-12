@@ -33,7 +33,7 @@
             <td>{{ graduate.name }}</td>
             <td>{{ graduate.group }}</td>
             <td>
-            {% if graduate.status == 'Без заявки' %}
+            {% if graduate.status == 'Без заявки' or graduate.status == 'Выбор кафедры' %}
                 <form method="post" action="{{ url_for('vkr.force_supervisor', id=graduate.id) }}" style="display:inline;">
                     <button type="submit" class="btn">Выбрать</button>
                 </form>
