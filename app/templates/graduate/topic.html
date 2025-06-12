@@ -41,8 +41,8 @@
             {% endif %}
                 <td>{{ graduate.name }}</td>
                 <td>{{ graduate.group }}</td>
-                <td>{{ graduate.topic if graduate.topic else '' }}</td>
                 {% if current_filter != 'none' %}
+                <td>{{ graduate.topic if graduate.topic else '' }}</td>
                 <td>
                     {% if graduate.status == 'Подтвержден' %}
                     <form method="post" action="{{ url_for('vkr.up_status', id=graduate.id) }}"
@@ -50,14 +50,18 @@
                         <button type="submit" class="btn">Подтвердить</button>
                     </form>
                     {% elif graduate.status == 'Ожидает проверки'%}
-                    <form method="post" action="#" style="display:inline;">
-                        <button type="submit" class="btn">Проверить на уникальность</button>
+                    <form method="post" action="{{ url_for('vkr.check_unique', id=graduate.id) }}" style="display:inline;">
+                        <button type="submit" class="btn">Проверить</button>
                     </form>
                     <form method="post" action="{{ url_for('vkr.down_status', id=graduate.id) }}"
                         style="display:inline;">
                         <button type="submit" class="btn-red">Отмена</button>
                     </form>
                     {% elif graduate.status == 'Проверка пройдена'%}
+                    <form method="post" action="{{ url_for('vkr.add', title=graduate.topic) }}"
+                        style="display:inline;">
+                        <button type="submit" class="btn">Добавить</button>
+                    </form>
                     <form method="post" action="{{ url_for('vkr.down_status', id=graduate.id) }}"
                         style="display:inline;">
                         <button type="submit" class="btn-red">Отмена</button>

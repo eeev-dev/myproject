@@ -130,7 +130,7 @@ def topic():
     return render_template('graduate/topic.html', graduates=get_current_graduates(filter_param), current_filter=filter_param)
 
 
-@vkr.route('/vkr/check', methods=['POST'])
+@vkr.route('/vkr/<int:id>/check', methods=['POST'])
 def check_unique(id):
     graduate = Graduate.query.get(id)
     title = graduate.topic
@@ -138,7 +138,7 @@ def check_unique(id):
     matches = []
 
     for topic in topics:
-        if title in topics.title:
+        if title in topic.title:
             matches.append(topics.title)
             try:
                 graduate.status = 'Подтвержден'
@@ -146,9 +146,9 @@ def check_unique(id):
                 db.session.commit()
             except Exception as e:
                 flash(str(e), 'danger')
-                return redirect('/topics')
+                return redirect('/vkr/topic')
             flash(f'Проверка на уникальность не пройдена: {topic.title}', 'danger')
-            return redirect('/topics')
+            return redirect('/vkr/topic')
         
     try:
         graduate.status = 'Проверка пройдена'
@@ -156,23 +156,23 @@ def check_unique(id):
         db.session.commit()
     except Exception as e:
         flash(str(e), 'danger')
-        return redirect('/topics')
+        return redirect('/vkr/topic')
 
     flash('Проверка на уникальность пройдена', 'success')
-    return redirect('/topics')
+    return redirect('/vkr/topic')
 
 
-@vkr.route('/vkr/add', methods=['POST'])
+@vkr.route('/vkr/<title>/add', methods=['POST'])
 def add(title):
     topic = Topic(title=title)
     try:
         db.session.add(topic)
         db.session.commit()
         flash('Тема добавлена в общую таблицу', 'success')
-        return redirect('/topics')
+        return redirect('/vkr/topic')
     except Exception as e:
         flash(str(e), 'danger')
-        return redirect('/topics')
+        return redirect('/vkr/topic')
     
 
 @vkr.route('/vkr/<int:id>/force', methods=['GET', 'POST'])
@@ -200,7 +200,7 @@ def force(id):
         return render_template('graduate/force_topic.html', graduate=graduate, topics=[s.title for s in standarts])
     
 
-@vkr.route('/vkr/<int:id>/update', methods=['POST'])
+@vkr.route('/vkr/<int:id>/update-topic', methods=['POST'])
 @login_required
 def up_status(id):
     graduate = Graduate.query.get_or_404(id)
@@ -214,18 +214,18 @@ def up_status(id):
         return redirect('/vkr/topic')
 
 
-@vkr.route('/vkr/<int:id>/cancel', methods=['POST'])
+@vkr.route('/vkr/<int:id>/cancel-topic', methods=['POST'])
 @login_required
 def down_status(id):
     graduate = Graduate.query.get_or_404(id)
     graduate.status = "Подтвержден"
+    graduate.topic = None
 
     try:
         db.session.commit()
         return redirect('/vkr/topic')
     except Exception as e:
         flash(str(e), 'danger')
-        print(str(e))
         return redirect('/vkr/topic')
 
 
