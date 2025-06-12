@@ -10,6 +10,8 @@ from ..models.topic import Topic
 from ..models.standart import Standart
 from ..models.student import Student
 from ..models.group import Group
+from ..models.user import User
+from ..models.teacher import Teacher
 
 vkr = Blueprint('vkr', __name__)
 
@@ -39,7 +41,7 @@ def supervisor():
         if datetime.utcnow() < current_user.supervisor_deadline:
             return render_template('graduate/supervisor.html', graduates=get_graduates(filter_param), current_filter=filter_param)
         else:
-            graduates = Graduate.query.filter_by(status='Без заявки').all()
+            graduates = Graduate.query.filter(or_(Graduate.status == 'Без заявки', Graduate.status == 'Ожидает подтверждения')).all()
             for graduate in graduates:
                 graduate.status = 'Выбор кафедры'
             try:
@@ -104,7 +106,7 @@ def get_current_graduates(filter_param):
         return graduates.filter(
             or_(
                 Graduate.status == 'Подтвержден',
-                Graduate.status == 'Выбор кафедры'
+                Graduate.status == 'Выбор темы'
             )
         ).all()
     elif filter_param == 'pending':
@@ -118,8 +120,9 @@ def topic():
     filter_param = request.args.get('filter', 'pending')
     if current_user.vkr_deadline is not None:
         if datetime.utcnow() > current_user.vkr_deadline:
-            for graduate in Graduate.query.filter_by(supervisor=current_user.name).filter_by(status='Без заявки').all():
-                graduate.status = 'Выбор кафедры'
+            for graduate in Graduate.query.filter_by(supervisor=current_user.name).filter(or_(Graduate.status == 'Без заявки', Graduate.status == 'Ожидает подтверждения')).all():
+                graduate.status = 'Выбор темы'
+                graduate.message = 'Свяжитесь по поводу темы с научным руководителем'
             db.session.commit()
     else:
         flash('Установите дедлайн', 'danger')
@@ -254,5 +257,87 @@ def upload_graduates():
     except Exception as e:
         flash(str(e), 'danger')
         return redirect('/vkr/supervisor')
+
+
+# API
+
+@vkr.route('/vkr/get', methods=['GET', 'POST'])
+def get_graduate():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
+    student_id = data.get('student_id')
+    graduate = Graduate.query.filter_by(student_id=student_id).first()
+    user = User.query.get(1)
+    if graduate and user:
+        return jsonify({
+            "supervisor_deadline": user.supervisor_deadline,
+            "topic_deadline": user.vkr_deadline,
+            "supervisor": graduate.supervisor,
+            "topic": graduate.topic,
+            "status": graduate.status,
+            "message": graduate.message,
+            "success": True
+        }), 200
+    else:
+        return jsonify({"success": False, "message": "Пользователь не найден"}), 401
+
+
+@vkr.route('/vkr/post-supervisor', methods=['GET', 'POST'])
+def post_supervisor():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
+    student_id = data.get('student_id')
+    supervisor = data.get('supervisor_name')
+
+    graduate = Graduate.query.filter_by(student_id=student_id).first()
+
+    if graduate:
+        try:
+            graduate.supervisor = supervisor
+            graduate.status = 'Ожидает подтверждения'
+            db.session.commit()
+        except Exception as e:
+            return jsonify({"success": False, "message": str(e)}), 401
+        
+        return jsonify({
+            "success": True,
+            "message": "Ок"
+        }), 200
+    else:
+        return jsonify({"success": False, "message": "Пользователь не найден"}), 401
     
 
+@vkr.route('/vkr/post-topic', methods=['GET', 'POST'])
+def post_topic():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
+    
+    student_id = data.get('student_id')
+    topic = data.get('topic')
+
+    graduate = Graduate.query.filter_by(student_id=student_id).first()
+
+    if graduate:
+        try:
+            graduate.topic = topic
+            graduate.status = 'Ожидает проверки'
+            db.session.commit()
+        except Exception as e:
+            return jsonify({"success": False, "message": str(e)}), 401
+
+        return jsonify({
+            "success": True,
+            "message": "Ок"
+        }), 200
+    else:
+        return jsonify({"success": False, "message": "Пользователь не найден"}), 401
+    
+
+@vkr.route('/api/teachers', methods=['GET'])
+def get_teachers():
+    teachers = Teacher.query.all()
+    teachers_list = [teacher.name for teacher in teachers]
+    return jsonify(teachers_list)

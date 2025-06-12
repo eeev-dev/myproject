@@ -21,6 +21,17 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: alembic_version; Type: TABLE; Schema: public; Owner: zebra
+--
+
+CREATE TABLE public.alembic_version (
+    version_num character varying(32) NOT NULL
+);
+
+
+ALTER TABLE public.alembic_version OWNER TO zebra;
+
+--
 -- Name: graduate; Type: TABLE; Schema: public; Owner: zebra
 --
 
@@ -468,6 +479,15 @@ ALTER TABLE ONLY public."user" ALTER COLUMN id SET DEFAULT nextval('public.user_
 
 
 --
+-- Data for Name: alembic_version; Type: TABLE DATA; Schema: public; Owner: zebra
+--
+
+COPY public.alembic_version (version_num) FROM stdin;
+ffed8e679a2e
+\.
+
+
+--
 -- Data for Name: graduate; Type: TABLE DATA; Schema: public; Owner: zebra
 --
 
@@ -544,6 +564,8 @@ COPY public.topic (id, title) FROM stdin;
 --
 
 COPY public."user" (id, name, login, password, practice_deadline, vkr_deadline, supervisor_deadline, role) FROM stdin;
+2	Ъеъев Ъ. Ъ.	admin	$2b$12$9vZ5ARmVPSXHgdVYjAIQce5QXNpmytgTL4PdpDTfOLPiug5Ospkoa	\N	\N	\N	admin
+1	Момуналиева Н. Т.	mnt	$2b$12$NrM3ydu91Z44jfv4MFzdheWMRKKJUy8qmQRa6lqnX7/7e.3UG/rZi	\N	\N	2025-06-14 04:30:00	user
 \.
 
 
@@ -614,7 +636,15 @@ SELECT pg_catalog.setval('public.topic_id_seq', 1, false);
 -- Name: user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: zebra
 --
 
-SELECT pg_catalog.setval('public.user_id_seq', 1, false);
+SELECT pg_catalog.setval('public.user_id_seq', 2, true);
+
+
+--
+-- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: zebra
+--
+
+ALTER TABLE ONLY public.alembic_version
+    ADD CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num);
 
 
 --
