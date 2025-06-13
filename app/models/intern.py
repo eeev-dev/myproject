@@ -9,6 +9,7 @@ class Intern(db.Model):
     student_id = db.Column(db.Integer)
     name = db.Column(db.String(50))
     place = db.Column(db.String(70))
+    title = db.Column(db.String(70))
     group = db.Column(db.String(50))
     year = db.Column(db.Integer)
     head_teacher = db.Column(db.String(50))

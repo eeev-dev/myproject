@@ -320,6 +320,7 @@ def get_letter():
         return jsonify({"success": False, "message": "Missing id"}), 401
     try:
         intern_id = int(request.form['id'])
+        title = str(request.form['title'])
     except ValueError:
         return jsonify({"success": False, "message": "Invalid id"}), 400
 
@@ -331,7 +332,7 @@ def get_letter():
     if file.filename == '':
         return jsonify({"success": False, "message": "No file selected"}), 400
 
-    return save_letter(intern_id, file)
+    return save_letter(intern_id, file, title)
 
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -340,7 +341,7 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def save_letter(intern_id, picture):
+def save_letter(intern_id, picture, title):
     try:
         i = Image.open(picture)
         i.verify()
@@ -358,6 +359,7 @@ def save_letter(intern_id, picture):
             intern = Intern.query.filter_by(student_id=intern_id).first()
             intern.letter = picture_fn
             intern.place = 'Свое место практики'
+            intern.title = title
             intern.status = 'Ожидает подтверждения'
             db.session.commit()
 

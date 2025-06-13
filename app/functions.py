@@ -1,6 +1,6 @@
 from docx import Document
 
-def create_doc(doc, interns):
+def create_doc(doc, interns, year, group, duration, head_teacher):
 
     def replace_placeholder_in_paragraphs(doc, placeholder, new_text):
         for p in doc.paragraphs:
@@ -19,10 +19,10 @@ def create_doc(doc, interns):
                         p.add_run(new_full_text)
 
 
-    replace_placeholder_in_paragraphs(doc, '{{YEAR}}', "2024-25")
-    replace_placeholder_in_paragraphs(doc, '{{HEAD_TEACHER}}', "Исраилова Н. А.")
-    replace_placeholder_in_paragraphs(doc, '{{GROUP}}', 'ИВТ(б)-1-22')
-    replace_placeholder_in_paragraphs(doc, '{{DURATION}}', '2025-жылдын 2-июнунан тартып 2025-жылдын 25-июлуна чейин')
+    replace_placeholder_in_paragraphs(doc, '{{YEAR}}', year)
+    replace_placeholder_in_paragraphs(doc, '{{HEAD_TEACHER}}', head_teacher)
+    replace_placeholder_in_paragraphs(doc, '{{GROUP}}', group)
+    replace_placeholder_in_paragraphs(doc, '{{DURATION}}', duration)
 
 
     # Функция замены плейсхолдера {{TABLE}} таблицей
@@ -61,6 +61,9 @@ def create_doc(doc, interns):
 
     table_data = [('№', 'Студенттердин ААА', 'Мекемелердин аты')]
     for idx, intern in enumerate(interns, start=1):
-        table_data.append((str(idx), intern.name, intern.place))
+        place = intern.place
+        if (intern.place == 'Свое место практики' and intern.title != None):
+                place = intern.title 
+        table_data.append((str(idx), intern.name, place))
 
     replace_table_placeholder(doc, '{{TABLE}}', table_data)

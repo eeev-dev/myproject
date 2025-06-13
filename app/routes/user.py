@@ -128,7 +128,7 @@ def report():
 
         doc = Document('app/static/files/template.docx')
 
-        create_doc(doc, interns)
+        create_doc(doc, interns, year, group, duration, head_teacher)
 
         output = BytesIO()
         doc.save(output)
