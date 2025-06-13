@@ -80,14 +80,6 @@ def set_deadline():
                             status='Выбор кафедры').all():
                         intern.status = 'Без заявки'
 
-                    try:
-                        db.session.commit()
-                        flash('Дедлайн установлен', 'success')
-                        return redirect(url_for('intern.all'))
-                    except Exception as e:
-                        flash(str(e), 'danger')
-                        return redirect(url_for('user.set_deadline'))
-
         elif param == 'supervisor':
             dt_str = request.form['deadline']
             current_user.supervisor_deadline = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M')
@@ -96,36 +88,24 @@ def set_deadline():
                     for graduate in Graduate.query.filter_by(supervisor=current_user.name).filter_by(status='Выбор кафедры').all():
                         graduate.status = 'Без заявки'
 
-                    try:
-                        db.session.commit()
-                        flash('Дедлайн установлен', 'success')
-                        return redirect(url_for('vkr.supervisor'))
-                    except Exception as e:
-                        flash(str(e), 'danger')
-                        return redirect(url_for('user.set_deadline'))
-
         elif param == 'vkr':
             dt_str = request.form['deadline']
             current_user.vkr_deadline = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M')
             if current_user.vkr_deadline is not None:
                 if datetime.utcnow() < current_user.vkr_deadline:
-                    for graduate in Graduate.query.filter_by(supervisor=current_user.name).filter_by(status='Выбор темы').all():
-                        graduate.status = 'Подтвержден'
-
-                    try:
-                        db.session.commit()
-                        flash('Дедлайн установлен', 'success')
-                        return redirect(url_for('vkr.topic'))
-                    except Exception as e:
-                        flash(str(e), 'danger')
-                        return redirect(url_for('user.set_deadline'))
-                    
+                    for graduate in Graduate.query.filter_by(supervisor=current_user.name).filter_by(status='Выбор кафедры').all():
+                        graduate.status = 'Без заявки'
         else:
             flash('Неизвестный параметр', 'danger')
             return redirect(url_for('user.set_deadline'))
         
-        return redirect(url_for('user.set_deadline'))  
-        
+        try:
+            db.session.commit()
+            flash('Дедлайн установлен', 'success')
+            return redirect(url_for('user.set_deadline'))
+        except Exception as e:
+            flash(str(e), 'danger')
+            return redirect(url_for('user.set_deadline'))
     else:
         return render_template('user/set_deadline.html', value=[current_user.practice_deadline, current_user.supervisor_deadline, current_user.vkr_deadline])
 
