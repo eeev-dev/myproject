@@ -124,6 +124,8 @@ def set_deadline():
             flash('Неизвестный параметр', 'danger')
             return redirect(url_for('user.set_deadline'))
         
+        return redirect(url_for('user.set_deadline'))  
+        
     else:
         return render_template('user/set_deadline.html', value=[current_user.practice_deadline, current_user.supervisor_deadline, current_user.vkr_deadline])
 

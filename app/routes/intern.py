@@ -280,7 +280,7 @@ def get_intern():
             "success": True,
             "status": intern.status,
             "deadline": user.practice_deadline,
-            "place": intern.place if place else None,
+            "place": intern.place,
             "place_id": place.id if place else None,
             "head_teacher": intern.head_teacher
         }), 200
@@ -355,7 +355,7 @@ def save_letter(intern_id, picture):
             i = Image.open(picture)
             i.save(picture_path)
 
-            intern = Intern.query.filter_by(id=intern_id).first()
+            intern = Intern.query.filter_by(student_id=intern_id).first()
             intern.letter = picture_fn
             intern.place = 'Свое место практики'
             intern.status = 'Ожидает подтверждения'
