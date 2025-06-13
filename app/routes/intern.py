@@ -230,7 +230,7 @@ def download_uploads():
 @intern.route('/intern/upload', methods=['GET'])
 def upload_interns():
     group = Group.query.filter_by(head_teacher=current_user.name).first()
-    print(current_user.name)
+    
     if group:
         # Очистка таблицы
         db.session.query(Intern).delete()
@@ -269,17 +269,20 @@ def get_intern():
     data = request.get_json()
     if not data:
         return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
-    intern_id = data.get('intern_id')
-    intern = Intern.query.get(intern_id)
+    
+    student_id = data.get('student_id')
+    intern = Intern.query.filter_by(student_id=student_id).first()
     place = Place.query.filter_by(title=intern.place).first()
     user = User.query.filter_by(name=intern.head_teacher).first()
+
     if intern and user:
         return jsonify({
             "success": True,
             "status": intern.status,
             "deadline": user.practice_deadline,
-            "place": intern.place if intern.place else None,
-            "place_id": place.id if place else None
+            "place": intern.place if place else None,
+            "place_id": place.id if place else None,
+            "head_teacher": intern.head_teacher
         }), 200
     else:
         return jsonify({"success": False, "message": "Пользователь не найден"}), 401
@@ -290,10 +293,11 @@ def post_intern():
     data = request.get_json()
     if not data:
         return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
-    intern_id = data.get('intern_id')
+    
+    student_id = data.get('student_id')
     place_id = data.get('place_id')
 
-    intern = Intern.query.get(intern_id)
+    intern = Intern.query.filter_by(student_id=student_id).first()
     place = Place.query.get(place_id)
     intern.place = place.title
     intern.status = 'Ожидает подтверждения'
