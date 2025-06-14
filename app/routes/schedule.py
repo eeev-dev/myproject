@@ -4,8 +4,11 @@ from flask_login import login_required
 from ..models.schedule import Schedule
 from ..models.student import Student
 from ..models.teacher import Teacher
+from ..models.group import Group
 from ..extensions import db
 from flask import jsonify
+
+from datetime import datetime
 
 schedule = Blueprint('schedule', __name__)
 
@@ -19,9 +22,10 @@ def get_schedule():
         return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
     
     student_id = data.get('student_id')
-    term = data.get('term')
 
     student = Student.query.get(student_id)
+    group = Group.query.filter_by(title=student.group).first()
+    term = get_term(group.year)
     schedule = Schedule.query.filter_by(group=student.group).filter_by(term=term).all()
 
     if student and schedule:
@@ -53,3 +57,11 @@ def get_schedule():
         if schedule == None:
             print('Расписание')
         return '', 204
+    
+
+def get_term(year):
+    month = datetime.now().month
+    if month in [7, 8, 9, 10, 12]:
+        return year * 2 - 1
+    else:
+        return year * 2
