@@ -27,8 +27,11 @@ def get_schedule():
     if student and schedule:
         schedule_list = []
         for s in schedule:
-            teacher_surname = extract_surname(s.teacher)
-            teacher = Teacher.query.filter(Teacher.name.like(f"{teacher_surname} %")).first()
+            teachers = Teacher.query.all()
+            link = ''
+            for teacher in teachers:
+                if s.teacher.replace(' ', '') == teacher.name.replace(' ', ''):
+                    link = teacher.url
             schedule_list.append({
                 "id": s.id,
                 "title": s.title,
@@ -40,7 +43,7 @@ def get_schedule():
                 "time": s.time,
                 "parity": s.parity,
                 "is_online": s.is_online,
-                "link": teacher.link if teacher else '',
+                "link": link,
                 "room": s.room
             })
         return jsonify(schedule_list)
