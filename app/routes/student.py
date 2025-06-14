@@ -8,6 +8,8 @@ from ..models.student import Student
 from ..models.group import Group
 from ..extensions import db
 
+from datetime import datetime
+
 student = Blueprint('student', __name__)
 
 
@@ -36,11 +38,22 @@ def login():
 
     student_number = data.get('student_number')
     student = Student.query.filter_by(student_number=student_number).first()
-    if student:
+    group = Group.query.filter_by(title=student.group).first()
+
+    if student and group:
         return jsonify({
             "success": True,
             "id": student.id,
+            "term": get_term(group.year),
             "message": "Авторизация успешна"
         }), 200
     else:
         return jsonify({"success": False, "message": "Пользователь не найден"}), 401
+    
+
+def get_term(year):
+    month = datetime.now().month
+    if month in [7, 8, 9, 10, 12]:
+        return year * 2 - 1
+    else:
+        return year * 2

@@ -1,0 +1,26 @@
+{% extends 'admin/admin.html' %}
+
+{% block content %}
+<div class="content">
+    <div class="form-wrapper">
+        <form method="post" class="edit-form">
+            <input type="text" name="id" value="{{ schedule_item.id }}" class="form_control" placeholder="ID">
+            <input type="text" name="title" value="{{ schedule_item.title }}" class="form_control" placeholder="Title">
+            <input type="text" name="type" value="{{ schedule_item.type }}" class="form_control" placeholder="Type">
+            <input type="text" name="teacher" value="{{ schedule_item.teacher }}" class="form_control" placeholder="Teacher">
+            <input type="text" name="group" value="{{ schedule_item.group }}" class="form_control" placeholder="Group">
+            <input type="text" name="term" value="{{ schedule_item.term }}" class="form_control" placeholder="Term">
+            <input type="text" name="day" value="{{ schedule_item.day }}" class="form_control" placeholder="Day">
+            <input type="text" name="time" value="{{ schedule_item.time }}" class="form_control" placeholder="Time">
+            <input type="text" name="parity" value="{{ schedule_item.parity }}" class="form_control" placeholder="Parity">
+            <input type="text" name="is_online" value="{{ schedule_item.is_online }}" class="form_control" placeholder="Is Online">
+            <input type="text" name="room" value="{{ schedule_item.room }}" class="form_control" placeholder="Room">
+            <input value="Подтвердить" type="submit" class="btn-green">
+        </form>
+
+        <form method="post" action="{{ url_for('admin.delete_schedule_item', id=schedule_item.id) }}" class="delete-form">
+            <button type="submit" class="btn-red">Удалить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

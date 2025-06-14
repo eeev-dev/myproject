@@ -1,6 +1,7 @@
 from flask_login import login_user, logout_user, current_user, login_required
 from ..forms import RegistrationForm, LoginForm
 from ..extensions import db, bcrypt
+from ..functions import find_teacher_and_subject, extract_subject, extract_teacher
 import csv
 import io
 from flask import Blueprint, render_template, redirect, flash, url_for, request
@@ -10,6 +11,7 @@ from ..models.user import User
 from ..models.group import Group
 from ..models.teacher import Teacher
 from ..models.student import Student
+from ..models.schedule import Schedule
 
 admin = Blueprint('admin', __name__)
 
@@ -260,3 +262,97 @@ def upload_students():
         return redirect('/admin/students')
     else:
         return render_template('admin/student/load.html')
+    
+# Расписание
+
+@admin.route('/admin/schedule', methods=['GET', 'POST'])
+@login_required
+def schedule():
+    schedule = Schedule.query.all()
+    return render_template('admin/schedule/table.html', schedule=schedule)
+
+
+@admin.route('/schedule/<int:id>/update', methods=['GET', 'POST'])
+@login_required
+def update_schedule(id):
+    schedule_item = Schedule.query.get(id)
+    if request.method == 'POST':
+        schedule_item.id = request.form['id']
+        schedule_item.title = request.form['title']
+        schedule_item.type = request.form['type']
+        schedule_item.teacher = request.form['teacher']
+        schedule_item.group = request.form['group']
+        schedule_item.term = request.form['term']
+        schedule_item.day = request.form['day']
+        schedule_item.time = request.form['time']
+        schedule_item.parity = request.form['parity']
+        schedule_item.is_online = request.form['is_online']
+        schedule_item.room = request.form['room']
+
+        try:
+            db.session.commit()
+            return redirect('/admin/schedule')
+        except Exception as e:
+            print(str(e))
+    else:
+        return render_template('admin/schedule/edit.html', schedule_item=schedule_item)
+
+
+@admin.route('/schedule/<int:id>/delete', methods=['GET', 'POST'])
+@login_required
+def delete_schedule_item(id):
+    schedule_item = Schedule.query.get(id)
+    try:
+        db.session.delete(schedule_item)
+        db.session.commit()
+        flash('Успех', 'success')
+        return redirect('/admin/schedule')
+    except Exception as e:
+        print(str(e))
+        flash('Запись не была удалена', 'danger')
+        return redirect('/admin/schedule')
+
+
+@admin.route('/load/schedule', methods=['GET', 'POST'])
+@login_required
+def upload_schedule():
+    if request.method == 'POST':
+        file = request.files.get('file')
+
+        if not file or not file.filename.endswith('.csv'):
+            flash('Загрузите корректный CSV-файл', 'danger')
+
+        # Чтение CSV-файла без сохранения
+        stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
+        reader = csv.reader(stream)
+
+        next(reader)
+
+        for row in reader:
+            if len(row) > 3 and row[3].strip():
+                year = 4
+                column1 = row[0].strip()
+                column2 = row[1].strip()
+                column3 = row[2].strip()
+                column4 = row[3].strip()
+                str = find_teacher_and_subject(column4)
+                schedule = Schedule(
+                    title=extract_subject(str).strip(),
+                    type=column4[1:3],
+                    teacher=extract_teacher(str),
+                    group=column2[-11:],
+                    term=year * 2 if 'Вес' in column2 else year * 2 - 1,
+                    day=column3,
+                    time=column1,
+                    parity='всегда',
+                    is_online=0 if column4[-1:].isdigit() else 1,
+                    room=column4[-5:] if column4[-1:].isdigit() else None
+                )
+                db.session.add(schedule)
+
+        db.session.commit()
+        flash("Данные успешно загружены", 'success')
+        return redirect('/admin/schedule')
+
+    else:
+        return render_template('admin/schedule/load.html')

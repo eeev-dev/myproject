@@ -1,0 +1,54 @@
+{% extends 'admin/admin.html' %}
+
+{% block content %}
+        <div class="content">
+            <table>
+                <thead>
+                    <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Тип</th>
+                    <th>Преподаватель</th>
+                    <th>Группа</th>
+                    <th>Семестр</th>
+                    <th>День</th>
+                    <th>Время</th>
+                    <th>Чётность</th>
+                    <th>Онлайн</th>
+                    <th>Аудитория</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for schedule_item in schedule %}
+                    <tr class="clickable-row" data-href="{{ url_for('admin.update_schedule', id=schedule_item.id) }}">
+                        <td>{{ schedule_item.id }}</td>
+                        <td>{{ schedule_item.title }}</td>
+                        <td>{{ schedule_item.type }}</td>
+                        <td>{{ schedule_item.teacher }}</td>
+                        <td>{{ schedule_item.group }}</td>
+                        <td>{{ schedule_item.term }}</td>
+                        <td>{{ schedule_item.day }}</td>
+                        <td>{{ schedule_item.time }}</td>
+                        <td>{{ schedule_item.parity }}</td>
+                        <td>{{ 'Да' if schedule_item.is_online == 1 else 'Нет' }}</td>
+                        <td>{{ schedule_item.room }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <footer class="py-3 my-4">
+            <a href="{{ url_for('user.report') }}" class="logo-link">
+                <img class="img img-blue" src="{{ url_for('static', filename='img/download_document.png')}}" alt="deadline">
+            </a>
+            <a href="{{ url_for('admin.upload_teachers') }}" class="logo-link">
+                <img class="img img-green" src="{{ url_for('static', filename='img/upload_users.png')}}" alt="deadline">
+            </a>
+            <a href="{{ url_for('intern.clear_uploads_folder') }}" class="logo-link">
+                <img class="img img-yellow" src="{{ url_for('static', filename='img/delete_images.png')}}" alt="deadline">
+            </a>
+            <a href="{{ url_for('review.all') }}" class="logo-link">
+                <img class="img img-purple" src="{{ url_for('static', filename='img/reviews.png')}}" alt="deadline">
+            </a>
+        </footer>
+{% endblock %}

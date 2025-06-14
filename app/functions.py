@@ -67,3 +67,27 @@ def create_doc(doc, interns, year, group, duration, head_teacher):
         table_data.append((str(idx), intern.name, place))
 
     replace_table_placeholder(doc, '{{TABLE}}', table_data)
+
+
+def find_teacher_and_subject(s):
+    start = s.find(']') + 1
+    first = s.find('[')
+    end = s.find('[', first + 1)
+
+    if 0 < start < end:
+        return s[start:end].strip()
+    else:
+        return ''
+    
+    
+def extract_subject(s):
+    caps = [i for i, c in enumerate(s) if c.isupper()]
+    if len(caps) >= 2:
+        return s[caps[0]:caps[1]]
+    else:
+        return ''
+    
+
+def extract_teacher(s):
+    parts = s.split()
+    return ' '.join(parts[-2:])

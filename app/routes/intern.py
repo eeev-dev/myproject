@@ -281,6 +281,7 @@ def get_intern():
             "status": intern.status,
             "deadline": user.practice_deadline,
             "place": intern.place,
+            "title": intern.title,
             "place_id": place.id if place else None,
             "head_teacher": intern.head_teacher
         }), 200

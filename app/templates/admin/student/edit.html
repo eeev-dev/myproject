@@ -12,7 +12,7 @@
             <input value="Подтвердить" type="submit" class="btn-green">
         </form>
 
-        <form method="post" action="" class="delete-form">
+        <form method="post" action="{{ url_for('admin.delete_student', id=student.id) }}" class="delete-form">
             <button type="submit" class="btn-red">Удалить</button>
         </form>
     </div>
