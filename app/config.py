@@ -4,6 +4,7 @@ class Config(object):
     APPNAME = 'app'
     ROOT = os.path.dirname(os.path.abspath(__file__))
     SERVER_PATH = os.path.join(ROOT, 'static', 'uploads')
+    UPLOAD_PATH = os.path.join(ROOT, 'static', 'files')
 
     USER = os.environ.get('POSTGRES_USER', 'zebra')
     PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'zebra')

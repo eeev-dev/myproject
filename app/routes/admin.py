@@ -4,7 +4,9 @@ from ..extensions import db, bcrypt
 from ..functions import find_teacher_and_subject, extract_subject, extract_teacher
 import csv
 import io
-from flask import Blueprint, render_template, redirect, flash, url_for, request
+from flask import Blueprint, render_template, redirect, flash, url_for, request, current_app
+import os
+import re
 from sqlalchemy import text
 
 from ..models.user import User
@@ -356,3 +358,64 @@ def upload_schedule():
 
     else:
         return render_template('admin/schedule/load.html')
+    
+#Расписание экзаменов
+
+@admin.route('/admin/exam', methods=['GET', 'POST'])
+def save_schedule():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash("Файл не найден в запросе", 'danger')
+            return redirect('/admin/exam')
+
+        file = request.files['file']
+
+        # Проверка расширения .docx
+        if not file.filename.endswith('.docx'):
+            flash('Допустим только .docx файл', 'danger')
+            return redirect('/admin/exam')
+
+        # Проверка названия: Расписание1.docx ... Расписание4.docx
+        filename = file.filename
+        if not re.fullmatch(r"Расписание[1-4]\.docx", filename):
+            flash("Название файла должно быть 'Расписание' + цифра от 1 до 4", 'danger')
+            return redirect('/admin/exam')
+
+        upload_path = current_app.config['UPLOAD_PATH']
+        os.makedirs(upload_path, exist_ok=True)
+
+        save_path = os.path.join(upload_path, filename)
+        file.save(save_path)
+
+        flash("Файл успешно сохранён", 'success')
+        return redirect('/admin/exam')
+
+    # Если GET — возвращаем HTML-шаблон
+    return render_template('admin/exam/exam.html')
+
+
+@admin.route('/admin/clear-exams', methods=['POST'])
+def clear_schedules():
+    upload_path = current_app.config['UPLOAD_PATH']
+
+    if not os.path.exists(upload_path):
+        flash('Папка загрузки не найдена', 'danger')
+        return redirect('/admin/exam')
+
+    deleted_files = []
+    for filename in os.listdir(upload_path):
+        if "Расписание" in filename:
+            file_path = os.path.join(upload_path, filename)
+            try:
+                os.remove(file_path)
+                deleted_files.append(filename)
+            except Exception as e:
+                flash(f"Ошибка при удалении {filename}: {str(e)}", 'danger')
+                return redirect('/admin/exam')
+
+    if deleted_files:
+        flash(f"Удалены файлы: {', '.join(deleted_files)}", 'success')
+        return redirect('/admin/exam')
+    else:
+        flash("Нет файлов для удаления", 'danger')
+        return redirect('/admin/exam')

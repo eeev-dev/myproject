@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, jsonify, flash
+from flask import Blueprint, render_template, request, redirect, jsonify, flash, send_from_directory, current_app
 from flask_login import login_required
 
 from ..models.schedule import Schedule
@@ -7,6 +7,7 @@ from ..models.teacher import Teacher
 from ..models.group import Group
 from ..extensions import db
 from flask import jsonify
+import os
 
 from datetime import datetime
 
@@ -65,3 +66,36 @@ def get_term(year):
         return year * 2 - 1
     else:
         return year * 2
+    
+
+@schedule.route('/schedule/exam', methods=['GET', 'POST'])
+def get_exams():
+    data = request.get_json()
+    if not data or 'student_id' not in data:
+        return jsonify({"success": False, "message": "student_id отсутствует"}), 400
+
+    student_id = data['student_id']
+
+    try:
+        student = Student.query.get(student_id)
+        group = Group.query.filter_by(title=student.group).first()
+        course = group.year
+    except:
+        return jsonify({"success": False, "message": "Нет данных для этого студента"}), 404
+
+    # Создаём название файла на основе курса
+    filename = f"Расписание{course}.docx"
+    upload_path = current_app.config['UPLOAD_PATH']
+    file_path = os.path.join(upload_path, filename)
+
+    # Проверяем, существует ли файл для этого курса
+    if not os.path.exists(file_path):
+        return jsonify({"success": False, "message": f"Файл для курса {course} не найден"}), 404
+
+    # Отправляем файл с нужным именем и mime-type docx
+    return send_from_directory(
+        directory=upload_path,
+        path=filename,
+        as_attachment=True,
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )

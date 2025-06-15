@@ -352,7 +352,7 @@ def save_letter(intern_id, picture, title):
             random_hex = secrets.token_hex(8)
             _, f_ext = os.path.splitext(picture.filename)
             picture_fn = random_hex + f_ext
-            picture_path = os.path.join(current_app.config['SERVER_PATH'], picture_fn)
+            picture_path = os.path.join(current_app.config['UPLOAD_PATH'], picture_fn)
 
             i = Image.open(picture)
             i.save(picture_path)

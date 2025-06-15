@@ -1,0 +1,25 @@
+{% extends 'admin/admin.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blocks/load_file.css') }}">
+{% endblock %}
+
+{% block title %} Загрузить расписание {% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <p>Подготовьте файл вида Расписание1.docx (цифра - курс) и загрузите через форму:</p>
+
+    <form action="{{ url_for('admin.save_schedule') }}" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".docx" required>
+        <button type="submit">Загрузить</button>
+    </form>
+    <p>
+
+
+    </p>
+    <form method="post" action="{{ url_for('admin.clear_schedules') }}" class="delete-form">
+            <button type="submit" class="btn-red">Удалить расписания</button>
+    </form>
+</div>
+{% endblock %}
