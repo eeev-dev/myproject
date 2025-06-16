@@ -31,7 +31,14 @@ def get_graduates(filter_param):
     elif filter_param == 'pending':
         return graduates.filter_by(status='Ожидает подтверждения').all()
     elif filter_param == 'confirmed':
-        return graduates.filter_by(status='Подтвержден').all()
+        return graduates.filter(
+            or_(
+                Graduate.status == 'Подтвержден',
+                Graduate.status == 'Ожидает проверки',
+                Graduate.status == 'Проверка пройдена',
+                Graduate.status == 'Выбор темы'
+            )
+        ).all()
 
 
 @vkr.route('/vkr/supervisor', methods=['GET'])
