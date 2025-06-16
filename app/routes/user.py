@@ -95,6 +95,8 @@ def set_deadline():
                 if datetime.utcnow() < current_user.vkr_deadline:
                     for graduate in Graduate.query.filter_by(supervisor=current_user.name).filter_by(status='Выбор темы').all():
                         graduate.status = 'Подтвержден'
+                        graduate.message = None
+                        
         else:
             flash('Неизвестный параметр', 'danger')
             return redirect(url_for('user.set_deadline'))
