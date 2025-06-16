@@ -7,7 +7,7 @@
 <div class="card-container">
     <a href="{{ url_for('intern.all') }}" class="card">
         <div class="card-header">
-            <div class="card-title"> {{interns_with_request}}/{{all}} </div>
+            <div class="card-title"> {{intern_requests}}/{{intern_all}} </div>
         </div>
 
         <div class="card-center">
@@ -15,12 +15,12 @@
         </div>
 
         <div class="card-footer">
-            <div>Ожидают подтверждения: <strong>{{pending_interns}}</strong></div>
+            <div>Ожидают подтверждения: <strong>{{intern_pending}}</strong></div>
         </div>
     </a>
     <a href="{{ url_for('vkr.supervisor') }}" class="card">
         <div class="card-header">
-            <div class="card-title"> 23/45 </div>
+            <div class="card-title"> {{vkr_requests}}/{{vkr_all}} </div>
         </div>
 
         <div class="card-center">
@@ -28,8 +28,7 @@
         </div>
 
         <div class="card-footer">
-            <div>Новых заявок: <strong>0</strong></div>
-            <div>Ожидают подтверждения: <strong>0</strong></div>
+            <div>Ожидают подтверждения: <strong>{{vkr_pending}}</strong></div>
         </div>
     </a>
 </div>
