@@ -1,0 +1,36 @@
+{% extends 'admin/admin.html' %}
+
+{% block content %}
+        <div class="content">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for topic in topics %}
+                    <tr class="clickable-row" data-href="{{ url_for('admin.update_topics', id=topic.id) }}">
+                        <td>{{ topic.id }}</td>
+                        <td>{{ topic.title }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <footer class="py-3 my-4">
+            <a href="{{ url_for('user.report') }}" class="logo-link">
+                <img class="img img-blue" src="{{ url_for('static', filename='img/download_document.png')}}" alt="deadline">
+            </a>
+            <a href="{{ url_for('admin.upload_topics') }}" class="logo-link">
+                <img class="img img-green" src="{{ url_for('static', filename='img/upload_users.png')}}" alt="deadline">
+            </a>
+            <a href="{{ url_for('intern.clear_uploads_folder') }}" class="logo-link">
+                <img class="img img-yellow" src="{{ url_for('static', filename='img/delete_images.png')}}" alt="deadline">
+            </a>
+            <a href="{{ url_for('review.all') }}" class="logo-link">
+                <img class="img img-purple" src="{{ url_for('static', filename='img/reviews.png')}}" alt="deadline">
+            </a>
+        </footer>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'admin/admin.html' %}
+
+{% block content %}
+<div class="content">
+    <div class="form-wrapper">
+        <form method="post" class="edit-form">
+            <input name="id" value="{{ topic.id }}" type="text" placeholder="ID" class="form_control">
+            <input name="title" value="{{ topic.title }}" type="text" placeholder="Название ВКР" class="form_control">
+            <input value="Подтвердить" type="submit" class="btn-green">
+        </form>
+
+        <form method="post" action="{{ url_for('admin.delete_topic', id=topic.id) }}" class="delete-form">
+            <button type="submit" class="btn-red">Удалить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

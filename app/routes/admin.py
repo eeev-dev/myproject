@@ -14,6 +14,7 @@ from ..models.group import Group
 from ..models.teacher import Teacher
 from ..models.student import Student
 from ..models.schedule import Schedule
+from ..models.topic import Topic
 
 admin = Blueprint('admin', __name__)
 
@@ -419,3 +420,73 @@ def clear_schedules():
     else:
         flash("Нет файлов для удаления", 'danger')
         return redirect('/admin/exam')
+    
+# Темы ВКР
+
+@admin.route('/admin/topics', methods=['GET', 'POST'])
+@login_required
+def topics():
+    topics = Topic.query.all()
+    return render_template('admin/topic/table.html', topics=topics)
+
+
+@admin.route('/topic/<int:id>/update', methods=['GET', 'POST'])
+@login_required
+def update_topics(id):
+    topic = Topic.query.get(id)
+    if request.method == 'POST':
+        topic.id = request.form['id']
+        topic.title = request.form['title']
+
+        try:
+            db.session.commit()
+            return redirect('/admin/topics')
+        except Exception as e:
+            print(str(e))
+    else:
+        return render_template('admin/topic/edit.html', topic=topic)
+
+
+@admin.route('/topic/<int:id>/delete', methods=['GET', 'POST'])
+@login_required
+def delete_topic(id):
+    topic = Topic.query.get(id)
+    try:
+        db.session.delete(topic)
+        db.session.commit()
+        flash('Успех', 'success')
+        return redirect('/admin/topics')
+    except Exception as e:
+        print(str(e))
+        flash('Запись не была удалена', 'danger')
+        return redirect('/admin/topics')
+
+
+@admin.route('/load/topics', methods=['GET', 'POST'])
+@login_required
+def upload_topics():
+    if request.method == 'POST':
+        file = request.files.get('file')
+
+        if not file or not file.filename.endswith('.csv'):
+            flash('Загрузите корректный CSV-файл', 'danger')
+
+        # Очистка таблицы
+        db.session.query(Topic).delete()
+        db.session.execute(text("ALTER SEQUENCE topic_id_seq RESTART WITH 1"))
+
+        # Чтение CSV-файла без сохранения
+        stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
+        reader = csv.reader(stream)
+
+        for row in reader:
+            topic = Topic(
+                title=row[0]
+            )
+            db.session.add(topic)
+
+        db.session.commit()
+        flash("Данные успешно загружены", 'success')
+        return redirect('/admin/topics')
+    else:
+        return render_template('admin/topic/load.html')
