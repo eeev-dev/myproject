@@ -41,7 +41,4 @@ def create_app(config_class=Config):
     login_manager.login_view = 'user.login'
     login_manager.login_message = 'Вы не можете получить доступ к данной странице. Нужно сначала войти'
 
-    with app.app_context():
-        db.create_all()
-
     return app
