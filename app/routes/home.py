@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for
 from flask_login import login_required, current_user
 
 from ..models.intern import Intern
@@ -11,6 +11,9 @@ main = Blueprint('main', __name__)
 @main.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
+    if current_user.role == 'admin':
+        return redirect(url_for('admin.panel'))
+    
     interns = Intern.query.filter(Intern.head_teacher == current_user.name)
 
     intern_pending = interns.filter(Intern.status == 'Ожидает подтверждения').count()

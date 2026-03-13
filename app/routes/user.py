@@ -45,6 +45,9 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(login=form.login.data).first()
+        if user is None:
+            flash("Пользователь не найден")
+            return render_template('user/login.html', form=form)
         if (user.role == 'admin'):
             flash('Войдите как методист', 'danger')
             return render_template('user/login.html', form=form)
