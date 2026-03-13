@@ -1,3 +1,5 @@
 venv/
 __pychache__/
 migrations/
+*.pyc
+*.cpython-313.pyc

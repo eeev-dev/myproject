@@ -2,7 +2,7 @@ from flask import Flask, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 
 from .config import Config
-from .extensions import db, migrate, login_manager
+from .extensions import db, migrate, login_manager, bcrypt
 
 from .routes.user import user
 from .routes.intern import intern
@@ -36,6 +36,7 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     migrate.init_app(app, db)
+    bcrypt.init_app(app)
 
     login_manager.init_app(app)
     login_manager.login_view = 'user.login'
