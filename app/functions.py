@@ -91,3 +91,13 @@ def extract_subject(s):
 def extract_teacher(s):
     parts = s.split()
     return ' '.join(parts[-2:])
+
+
+def calculate_term(csv_term_is_autumn: bool, year: int) -> int:
+    if csv_term_is_autumn:
+        semester_offset = 1
+    else:
+        semester_offset = 2
+
+    term = (year - 1) * 2 + semester_offset
+    return term

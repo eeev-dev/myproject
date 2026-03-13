@@ -1,7 +1,7 @@
 from flask_login import login_user, logout_user, current_user, login_required
 from ..forms import RegistrationForm, LoginForm
 from ..extensions import db, bcrypt
-from ..functions import find_teacher_and_subject, extract_subject, extract_teacher
+from ..functions import calculate_term, find_teacher_and_subject, extract_subject, extract_teacher
 import csv
 import io
 from flask import Blueprint, render_template, redirect, flash, url_for, request, current_app
@@ -13,6 +13,8 @@ from ..models.user import User
 from ..models.group import Group
 from ..models.teacher import Teacher
 from ..models.student import Student
+from ..models.intern import Intern
+from ..models.graduate import Graduate
 from ..models.schedule import Schedule
 from ..models.topic import Topic
 
@@ -68,7 +70,7 @@ def update(id):
             db.session.commit()
             return redirect('/admin/groups')
         except Exception as e:
-            print(str(e))
+            flash(f'Ошибка при обновлении группы: {str(e)}', 'danger')
     else:
         return render_template('admin/group/edit.html', group=group)
 
@@ -83,8 +85,7 @@ def delete(id):
         flash('Успех', 'success')
         return redirect('/admin/groups')
     except Exception as e:
-        print(str(e))
-        flash('Запись не была удалена', 'danger')
+        flash(f'Запись не была удалена: {str(e)}', 'danger')
         return redirect('/admin/groups')
 
 
@@ -105,16 +106,54 @@ def upload_groups():
         stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
         reader = csv.reader(stream)
 
-        for row in reader:
-            group = Group(
-                title=row[0],
-                year=row[1]
-            )
-            db.session.add(group)
+        try:
+            # Чтение CSV с удалением BOM
+            file.stream.seek(0)  # вернуться в начало файла
+            stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
+            reader = csv.reader(stream)
 
-        db.session.commit()
-        flash("Данные успешно загружены", 'success')
-        return redirect('/admin/groups')
+            unique_groups = {}  # словарь: {title: year}
+
+            for i, row in enumerate(reader, start=1):
+                try:
+                    # Проверка на пустую или короткую строку
+                    if not row or len(row) < 2:
+                        flash(f"Строка {i} пропущена: недостаточно столбцов", "warning")
+                        continue
+
+                    title = row[1].strip()
+                    year_str = row[0].strip()
+                    if not year_str:
+                        flash(f"Строка {i} пропущена: пустой год", "warning")
+                        continue
+
+                    year = year_str[0]  # берем только первый символ года
+
+                    # Добавляем только уникальные title
+                    if title not in unique_groups:
+                        unique_groups[title] = year
+
+                except Exception as e:
+                    flash(f"Ошибка в строке {i}: {e}", "danger")
+
+            # Вставка уникальных групп в базу
+            for title, year in unique_groups.items():
+                try:
+                    group = Group(title=title, year=year)
+                    db.session.add(group)
+                except Exception as e:
+                    flash(f"Ошибка при добавлении группы '{title}': {e}", "danger")
+
+            try:
+                db.session.commit()
+                flash(f"Импортировано {len(unique_groups)} уникальных групп", "success")
+                return redirect('/admin/groups')
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Ошибка при сохранении в базе данных: {e}", "danger")
+
+        except Exception as e:
+            flash(f"Ошибка при чтении CSV: {e}", "danger")
     else:
         return render_template('admin/group/load.html')
 
@@ -140,7 +179,7 @@ def update_teacher(id):
             db.session.commit()
             return redirect('/admin/teachers')
         except Exception as e:
-            print(str(e))
+            flash(f'Ошибка при обновлении преподавателя: {str(e)}', 'danger')
     else:
         return render_template('admin/teacher/edit.html', teacher=teacher)
 
@@ -155,8 +194,7 @@ def delete_teacher(id):
         flash('Успех', 'success')
         return redirect('/admin/teachers')
     except Exception as e:
-        print(str(e))
-        flash('Запись не была удалена', 'danger')
+        flash(f'Запись не была удалена: {str(e)}', 'danger')
         return redirect('/admin/teachers')
 
 
@@ -174,19 +212,28 @@ def upload_teachers():
         db.session.execute(text("ALTER SEQUENCE teacher_id_seq RESTART WITH 1"))
 
         # Чтение CSV-файла без сохранения
-        stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
-        reader = csv.reader(stream)
+        file.stream.seek(0)
+        content = file.stream.read().decode("utf-8-sig")
+        reader = csv.reader(content.splitlines())
 
-        for row in reader:
-            teacher = Teacher(
-                name=row[0],
-                url=row[1]
-            )
-            db.session.add(teacher)
+        try:
+            for row in reader:
+                teacher = Teacher(
+                    name=row[0],
+                    url=row[1]
+                )
+                db.session.add(teacher)
 
-        db.session.commit()
-        flash("Данные успешно загружены", 'success')
-        return redirect('/admin/teachers')
+            try:
+                db.session.commit()
+                flash("Данные успешно загружены", 'success')
+                return redirect('/admin/teachers')
+            except Exception as e:
+                flash(f'Ошибка при добавлении: {str(e)}', 'danger')
+            
+        except Exception as e:
+            flash(f"Ошибка при обработке CSV: {e}", "danger")
+
     else:
         return render_template('admin/teacher/load.html')
     
@@ -214,7 +261,7 @@ def update_student(id):
             db.session.commit()
             return redirect('/admin/students')
         except Exception as e:
-            print(str(e))
+            flash(f'Ошибка при обновлении студента: {str(e)}', 'danger')
     else:
         return render_template('admin/student/edit.html', student=student)
 
@@ -229,8 +276,7 @@ def delete_student(id):
         flash('Успех', 'success')
         return redirect('/admin/students')
     except Exception as e:
-        print(str(e))
-        flash('Запись не была удалена', 'danger')
+        flash(f'Ошибка при удалении студента: {str(e)}', 'danger')
         return redirect('/admin/students')
 
 
@@ -242,29 +288,88 @@ def upload_students():
 
         if not file or not file.filename.endswith('.csv'):
             flash('Загрузите корректный CSV-файл', 'danger')
+            return redirect(request.url)
 
-        # Очистка таблицы
-        db.session.query(Teacher).delete()
-        db.session.execute(text("ALTER SEQUENCE student_id_seq RESTART WITH 1"))
+        try:
+            # Очистка таблицы Student и сброс последовательности
+            db.session.query(Student).delete()
+            db.session.execute(text("ALTER SEQUENCE student_id_seq RESTART WITH 1"))
 
-        # Чтение CSV-файла без сохранения
-        stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
-        reader = csv.reader(stream)
+            # Опционально: очистка других связанных таблиц
+            db.session.query(Intern).delete()
+            db.session.query(Graduate).delete()
+            db.session.commit()
 
-        for row in reader:
-            student = Student(
-                name=row[0],
-                group=row[1],
-                student_number=row[2],
-                score=row[3]
-            )
-            db.session.add(student)
+            # Чтение CSV с удалением BOM
+            file.stream.seek(0)
+            content = file.stream.read().decode("utf-8-sig")
+            reader = csv.reader(content.splitlines())
 
-        db.session.commit()
-        flash("Данные успешно загружены", 'success')
+            for i, row in enumerate(reader, start=1):
+                try:
+                    # Проверка на пустую или некорректную строку
+                    if not row or len(row) < 4:
+                        flash(f"Строка {i} пропущена: недостаточно столбцов", "warning")
+                        continue
+
+                    # Сохраняем данные студента
+                    name = row[2].strip()
+                    group = row[1].strip()
+                    student_number = row[3].strip()
+
+                    if not name or not group or not student_number:
+                        flash(f"Строка {i} пропущена: пустые поля", "warning")
+                        continue
+
+                    # Создаем Student
+                    student = Student(
+                        name=name,
+                        group=group,
+                        student_number=student_number
+                    )
+                    db.session.add(student)
+                    db.session.flush()  # чтобы получить student.id до commit
+
+                    # Создаем Intern
+                    try:
+                        year = int(row[0].strip()[0])
+                    except Exception:
+                        flash(f"Строка {i}: неверный формат года '{row[0]}'", "warning")
+                        year = None
+
+                    intern = Intern(
+                        student_id=student.id,
+                        name=name,
+                        group=group,
+                        year=year
+                    )
+                    db.session.add(intern)
+
+                    # Создаем Graduate
+                    graduate = Graduate(
+                        student_id=student.id,
+                        name=name,
+                        group=group,
+                    )
+                    db.session.add(graduate)
+
+                except Exception as e:
+                    flash(f"Ошибка в строке {i}: {e}", "danger")
+
+            # Сохраняем все записи
+            try:
+                db.session.commit()
+                flash("Данные успешно загружены", "success")
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Ошибка при сохранении в базе данных: {e}", "danger")
+
+        except Exception as e:
+            flash(f"Ошибка при обработке CSV: {e}", "danger")
+
         return redirect('/admin/students')
-    else:
-        return render_template('admin/student/load.html')
+
+    return render_template('admin/student/load.html')
     
 # Расписание
 
@@ -296,7 +401,7 @@ def update_schedule(id):
             db.session.commit()
             return redirect('/admin/schedule')
         except Exception as e:
-            print(str(e))
+            flash(f'Ошибка при обновлении расписания: {str(e)}', 'danger')
     else:
         return render_template('admin/schedule/edit.html', schedule_item=schedule_item)
 
@@ -311,8 +416,7 @@ def delete_schedule_item(id):
         flash('Успех', 'success')
         return redirect('/admin/schedule')
     except Exception as e:
-        print(str(e))
-        flash('Запись не была удалена', 'danger')
+        flash(f'Запись не была удалена: {str(e)}', 'danger')
         return redirect('/admin/schedule')
 
 
@@ -325,37 +429,91 @@ def upload_schedule():
         if not file or not file.filename.endswith('.csv'):
             flash('Загрузите корректный CSV-файл', 'danger')
 
+        # Очистка таблицы
+        db.session.query(Schedule).delete()
+        db.session.execute(text("ALTER SEQUENCE schedule_id_seq RESTART WITH 1"))
+
         # Чтение CSV-файла без сохранения
         stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
         reader = csv.reader(stream)
 
-        next(reader)
+        try:
+            # Чтение CSV с удалением BOM
+            file.stream.seek(0)  # вернуться в начало файла
+            stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
+            reader = csv.reader(stream)
 
-        for row in reader:
-            if len(row) > 3 and row[3].strip():
-                year = 4
-                column1 = row[0].strip()
-                column2 = row[1].strip()
-                column3 = row[2].strip()
-                column4 = row[3].strip()
-                str = find_teacher_and_subject(column4)
+            for row in reader:
+                if len(row) < 4:
+                    continue
+
+                time = row[0].strip()
+                group = re.search(r'группа:\s*([^,]+)', row[1])
+                day = row[2].strip()
+                lesson_text = row[3].strip()
+
+                if not lesson_text:
+                    continue
+
+                group_csv = group.group(1) if group else ""
+
+                group_bd = Group.query.filter_by(title=group_csv).first()
+
+                if not group_bd:
+                    flash(f"Группа '{group}' не найдена. Загрузите ее в разделе 'Группы'", "warning")
+                    continue
+
+                term = calculate_term(csv_term_is_autumn=("Осен" in row[1]), year=int(group_bd.year))
+
+                # тип занятия
+                type_match = re.search(r'\[(.*?)\]', lesson_text)
+                lesson_type = type_match.group(1) if type_match else ""
+
+                # аудитория
+                if re.search(r'\bonline\b', lesson_text, re.IGNORECASE):
+                    room = ""
+                else:
+                    room_match = re.search(r'ауд\.\s*([^\s]+)', lesson_text)
+                    room = room_match.group(1) if room_match else ""
+
+                # преподаватель (Фамилия И.О.)
+                teacher_match = re.search(r'([А-ЯЁ][а-яё]+\s+[А-Я]\.[А-Я]\.)', lesson_text)
+                teacher = teacher_match.group(1) if teacher_match else ""
+
+                # название предмета
+                title = lesson_text
+                title = re.sub(r'\[.*?\]', '', title)        # убрать [Лк], [нед...]
+                title = re.sub(r'[А-ЯЁ][а-яё]+\s+[А-Я]\.[А-Я]\.', '', title)  # убрать преподавателя
+                title = re.sub(r'\s*ауд\..*$', '', title)    # убрать аудиторию
+                title = re.sub(r'\bonline\b', '', title, flags=re.IGNORECASE)
+                title = re.sub(r'\s+', ' ', title).strip()
+
                 schedule = Schedule(
-                    title=extract_subject(str).strip(),
-                    type=column4[1:3],
-                    teacher=extract_teacher(str),
-                    group=column2[-11:],
-                    term=year * 2 if 'Вес' in column2 else year * 2 - 1,
-                    day=column3,
-                    time=column1,
-                    parity='всегда',
-                    is_online=0 if column4[-1:].isdigit() else 1,
-                    room=column4[-5:] if column4[-1:].isdigit() else None
+                    title=title,
+                    type=lesson_type,
+                    teacher=teacher,
+                    group=group_bd.title,
+                    term=term,
+                    day=day,
+                    time=time,
+                    parity="всегда",
+                    is_online=1 if "nline" in row[3] else 0,
+                    room=room
                 )
+
                 db.session.add(schedule)
 
-        db.session.commit()
-        flash("Данные успешно загружены", 'success')
-        return redirect('/admin/schedule')
+            try:
+                db.session.commit()
+                flash("Данные успешно загружены", 'success')
+                return redirect('/admin/schedule')
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Ошибка при сохранении в базе данных: {e}", "danger")
+
+        except Exception as e:
+            flash(f"Ошибка при чтении CSV: {e}", "danger")
+            return redirect('/admin/schedule')
 
     else:
         return render_template('admin/schedule/load.html')
@@ -442,7 +600,7 @@ def update_topics(id):
             db.session.commit()
             return redirect('/admin/topics')
         except Exception as e:
-            print(str(e))
+            flash(str(e), 'danger')
     else:
         return render_template('admin/topic/edit.html', topic=topic)
 
@@ -457,8 +615,7 @@ def delete_topic(id):
         flash('Успех', 'success')
         return redirect('/admin/topics')
     except Exception as e:
-        print(str(e))
-        flash('Запись не была удалена', 'danger')
+        flash(f'Запись не была удалена: {str(e)}', 'danger')
         return redirect('/admin/topics')
 
 
