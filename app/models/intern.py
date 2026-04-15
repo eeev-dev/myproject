@@ -5,6 +5,9 @@ from ..extensions import db
 
 
 class Intern(db.Model):
+    __table_args__ = (
+        db.UniqueConstraint('student_id', 'name', 'group', 'year', name='uq_intern_student_group_year'),
+    )
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer)
     name = db.Column(db.String(50))

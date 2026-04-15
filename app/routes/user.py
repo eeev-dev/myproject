@@ -56,7 +56,10 @@ def login():
                 login_user(user, remember=form.remember.data)
                 next_page = request.args.get('next')
                 flash("Вы успешно авторизовались", "success")
-                return redirect(next_page) if next_page else redirect(url_for('user.login'))
+                if next_page:
+                    return redirect(next_page)
+                else:
+                    return redirect(url_for('main.home'))
             else:
                 flash(str(form.errors), "danger")
     return render_template('user/login.html', form=form)

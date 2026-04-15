@@ -230,63 +230,85 @@ def download_uploads():
 @intern.route('/intern/upload', methods=['GET'])
 def upload_interns():
     group = Group.query.filter_by(head_teacher=current_user.name).first()
-    
-    if group:
-        # Очистка таблицы
-        db.session.query(Intern).delete()
-        db.session.execute(text("ALTER SEQUENCE intern_id_seq RESTART WITH 1"))
 
-        students = Student.query.filter_by(group=group.title).all()
-
-        for student in students:
-            intern = Intern(
-                student_id=student.id,
-                name = student.name,
-                group = student.group,
-                year = group.year,
-                head_teacher = current_user.name,
-                score = student.score,
-                status = 'Без заявки'
-            )
-            db.session.add(intern)
-
-        try:
-            db.session.commit()
-            flash('Данные успешно загружены', 'success')
-            return redirect('/intern/all')
-        except Exception as e:
-            flash(str(e), 'danger')
-            return redirect('/intern/all')
-
-    else:
+    if not group:
         flash('Руководитель практики еще не назначен', 'danger')
+        return redirect('/intern/all')
+
+    students = Student.query.filter_by(group=group.title).all()
+
+    existing = db.session.query(Intern.student_id).filter_by(
+        group=group.title,
+        year=group.year
+    ).all()
+
+    existing_ids = {e[0] for e in existing}
+
+    added = 0
+
+    for student in students:
+        if student.id in existing_ids:
+            continue
+
+        intern = Intern(
+            student_id=student.id,
+            name=student.name,
+            group=student.group,
+            year=group.year,
+            head_teacher=current_user.name,
+            score=student.score,
+            status='Без заявки'
+        )
+
+        db.session.add(intern)
+        added += 1
+
+    try:
+        db.session.commit()
+
+        if added:
+            flash(f'Добавлено новых интернов: {added}', 'success')
+        else:
+            flash('Новых интернов нет — всё уже загружено', 'info')
+
+        return redirect('/intern/all')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(str(e), 'danger')
         return redirect('/intern/all')
 
 # API для приложения
 
 @intern.route('/intern/get', methods=['GET', 'POST'])
 def get_intern():
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
-    
-    student_id = data.get('student_id')
-    intern = Intern.query.filter_by(student_id=student_id).first()
-    place = Place.query.filter_by(title=intern.place).first()
-    user = User.query.filter_by(name=intern.head_teacher).first()
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
+        
+        student_id = data.get('student_id')
+        intern = Intern.query.filter_by(student_id=student_id).first()
+        place = Place.query.filter_by(title=intern.place).first() if intern else None
+        user = User.query.filter_by(name=intern.head_teacher).first() if intern else None
 
-    if intern and user:
-        return jsonify({
-            "success": True,
-            "status": intern.status,
-            "deadline": user.practice_deadline,
-            "place": intern.place,
-            "title": intern.title,
-            "place_id": place.id if place else None,
-            "head_teacher": intern.head_teacher
-        }), 200
-    else:
-        return jsonify({"success": False, "message": "Пользователь не найден"}), 401
+        if intern and user:
+            return jsonify({
+                "success": True,
+                "status": intern.status,
+                "deadline": user.practice_deadline,
+                "place": intern.place,
+                "title": intern.title,
+                "place_id": place.id if place else None,
+                "head_teacher": intern.head_teacher
+            }), 200
+        else:
+            return jsonify({"success": False, "message": "Пользователь не найден"}), 401
+
+    except Exception as e:
+        # Любая ошибка попадёт сюда
+        print(str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @intern.route('/intern/post', methods=['GET', 'POST'])

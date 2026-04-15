@@ -26,6 +26,9 @@ def login_admin():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(login=form.login.data).first()
+        if not user:
+            flash('Пользователь не найден. Проверьте логин или пароль', 'danger')
+            return render_template('admin/login.html', form=form)
         if user.role == None or user.role == 'user':
             user.role = 'user'
             db.session.commit()
@@ -297,7 +300,9 @@ def upload_students():
 
             # Опционально: очистка других связанных таблиц
             db.session.query(Intern).delete()
+            db.session.execute(text("ALTER SEQUENCE intern_id_seq RESTART WITH 1"))
             db.session.query(Graduate).delete()
+            db.session.execute(text("ALTER SEQUENCE graduate_id_seq RESTART WITH 1"))
             db.session.commit()
 
             # Чтение CSV с удалением BOM
@@ -329,29 +334,6 @@ def upload_students():
                     )
                     db.session.add(student)
                     db.session.flush()  # чтобы получить student.id до commit
-
-                    # Создаем Intern
-                    try:
-                        year = int(row[0].strip()[0])
-                    except Exception:
-                        flash(f"Строка {i}: неверный формат года '{row[0]}'", "warning")
-                        year = None
-
-                    intern = Intern(
-                        student_id=student.id,
-                        name=name,
-                        group=group,
-                        year=year
-                    )
-                    db.session.add(intern)
-
-                    # Создаем Graduate
-                    graduate = Graduate(
-                        student_id=student.id,
-                        name=name,
-                        group=group,
-                    )
-                    db.session.add(graduate)
 
                 except Exception as e:
                     flash(f"Ошибка в строке {i}: {e}", "danger")
@@ -460,7 +442,7 @@ def upload_schedule():
                 group_bd = Group.query.filter_by(title=group_csv).first()
 
                 if not group_bd:
-                    flash(f"Группа '{group}' не найдена. Загрузите ее в разделе 'Группы'", "warning")
+                    flash(f"Группа '{group_csv}' не найдена. Загрузите ее в разделе 'Группы'", "warning")
                     continue
 
                 term = calculate_term(csv_term_is_autumn=("Осен" in row[1]), year=int(group_bd.year))
