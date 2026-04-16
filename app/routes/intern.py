@@ -229,17 +229,20 @@ def download_uploads():
 
 @intern.route('/intern/upload', methods=['GET'])
 def upload_interns():
-    group = Group.query.filter_by(head_teacher=current_user.name).first()
+    groups = Group.query.filter_by(head_teacher=current_user.name).all()
 
-    if not group:
+    if not groups:
         flash('Руководитель практики еще не назначен', 'danger')
         return redirect('/intern/all')
 
-    students = Student.query.filter_by(group=group.title).all()
+    group_titles = [g.title for g in groups]
 
-    existing = db.session.query(Intern.student_id).filter_by(
-        group=group.title,
-        year=group.year
+    # Все студенты из всех групп руководителя
+    students = Student.query.filter(Student.group.in_(group_titles)).all()
+
+    # Уже существующие интерны (чтобы не дублировать)
+    existing = db.session.query(Intern.student_id).filter(
+        Intern.group.in_(group_titles)
     ).all()
 
     existing_ids = {e[0] for e in existing}
@@ -254,7 +257,6 @@ def upload_interns():
             student_id=student.id,
             name=student.name,
             group=student.group,
-            year=group.year,
             head_teacher=current_user.name,
             score=student.score,
             status='Без заявки'
@@ -277,7 +279,7 @@ def upload_interns():
         db.session.rollback()
         flash(str(e), 'danger')
         return redirect('/intern/all')
-
+    
 # API для приложения
 
 @intern.route('/intern/get', methods=['GET', 'POST'])
