@@ -1,0 +1,53 @@
+{% extends 'admin/steps/_layout.html' %}
+{% block title %}Шаг 6 · Приложение{% endblock %}
+{% block step %}
+<header class="head"><div>
+  <span class="eyebrow">Шаг 6 из 6</span>
+  <h1>Отправьте приложение студентам</h1>
+  <p class="lead">Загрузите установочный файл, затем скачайте его или отправьте ссылку в чат группы. Студенты входят по номеру студенческого билета.</p>
+</div></header>
+
+<div style="display:flex; flex-wrap:wrap; gap:16px; align-items:stretch">
+  <section class="hero" style="flex:2 1 460px; min-width:0; box-shadow:none" aria-labelledby="apk-title">
+    <div style="flex:1 1 260px; display:flex; flex-direction:column; gap:14px">
+      <span aria-hidden="true" style="width:64px; height:64px; border-radius:18px; background:#fff; display:flex; align-items:center; justify-content:center; color:var(--link)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg></span>
+      <div style="display:flex; flex-direction:column; gap:4px">
+        <h2 id="apk-title" style="font-size:24px; font-weight:600; letter-spacing:-.01em">Приложение «Практика»</h2>
+        <span style="font-size:14px">{% if apk %}Android · {{ apk.name }} · {{ apk.size }}{% else %}Установочный файл ещё не загружен{% endif %}</span>
+      </div>
+      {% if apk %}
+      <div class="actions">
+        <a class="btn dark lg" href="{{ url_for('static', filename='app/' ~ apk.name) }}" download>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Скачать APK</a>
+        <button class="btn glass lg" type="button" data-copy="{{ apk_url }}" data-copied="Ссылка скопирована">Скопировать ссылку</button>
+      </div>
+      {% endif %}
+      <form method="post" enctype="multipart/form-data">
+        <label class="btn {{ 'glass' if apk else 'dark lg' }}" style="cursor:pointer">
+          <input class="sr-only" type="file" name="apk" accept=".apk,.aab" data-autosubmit>
+          {{ 'Заменить файл' if apk else 'Загрузить .apk' }}
+        </label>
+      </form>
+    </div>
+  </section>
+
+  <section class="card" style="flex:1 1 340px; min-width:0; display:flex; flex-direction:column; gap:10px" aria-labelledby="msg-title">
+    <label id="msg-title" for="msg" style="font-size:18px; font-weight:600">Сообщение для чата группы</label>
+    <textarea class="textarea" id="msg" rows="7" style="font-size:14px">{{ message }}</textarea>
+    <button class="btn" style="align-self:flex-start" type="button" data-copy-from="#msg" data-copied="Скопировано">Скопировать текст</button>
+  </section>
+</div>
+
+<form method="post">
+  <input type="hidden" name="sent_form" value="1">
+  <label class="check {{ 'on' if sent }}">
+    <input type="checkbox" name="sent" value="1" {{ 'checked' if sent }} onchange="this.form.submit()">
+    <span><b>Приложение отправлено студентам</b><small>Отметьте, чтобы шаг считался выполненным и предупреждение на главной пропало</small></span>
+  </label>
+</form>
+
+<footer class="step-foot">
+  <a class="btn lg" href="{{ url_for('steps.step5') }}">Назад</a>
+  <a class="btn dark lg" href="{{ url_for('admin.dashboard') }}">Готово, на главную</a>
+</footer>
+{% endblock %}

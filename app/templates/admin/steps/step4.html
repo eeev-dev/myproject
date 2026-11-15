@@ -1,0 +1,44 @@
+{% extends 'admin/steps/_layout.html' %}
+{% block title %}Шаг 4 · Инструкция{% endblock %}
+{% block step %}
+<header class="head"><div>
+  <span class="eyebrow">Шаг 4 из 6</span>
+  <h1>Инструкция для своего места практики</h1>
+  <p class="lead">Студенты, которые нашли место сами, увидят эту инструкцию и приложения к ней в мобильном приложении.</p>
+</div></header>
+
+<form method="post" enctype="multipart/form-data" class="split">
+  <section class="card main" style="gap:10px" aria-labelledby="ins-title">
+    <label id="ins-title" for="ins-text" style="font-size:18px; font-weight:600">Текст инструкции</label>
+    <textarea class="textarea" id="ins-text" name="text" rows="14" style="border-radius:16px; padding:14px 16px; line-height:1.55"
+      placeholder="1. Договоритесь с предприятием о прохождении практики.&#10;2. …">{{ text }}</textarea>
+    <div><button class="btn dark" type="submit">Сохранить</button></div>
+  </section>
+
+  <section class="card side" style="gap:12px" aria-labelledby="att-title">
+    <h2 id="att-title">Приложения</h2>
+    <label class="drop sm" data-drop>
+      <span style="font-size:15px; font-weight:600">Перетащите файлы сюда</span>
+      <span style="font-size:13px; color:var(--ink-3)">PDF, DOCX или изображения</span>
+      <input class="sr-only" type="file" name="files" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xls,.xlsx,.txt" data-file-input data-autosubmit>
+      <span class="btn sm" aria-hidden="true">Выбрать файлы</span>
+      <span class="filename" data-file-name></span>
+    </label>
+    <ul class="files">
+      {% for f in files %}
+      <li>
+        <span class="file-ic" style="color: {{ '#B5471B' if f.type == 'PDF' else '#1F4E7A' }}">{{ f.type[:4] }}</span>
+        <span class="meta"><a href="{{ url_for('steps.instruction_file', name=f.name) }}" download>{{ f.name }}</a><span class="muted" style="font-size:12px">{{ f.size }}</span></span>
+        <button class="icon-btn" type="submit" formaction="{{ url_for('steps.delete_instruction_file', name=f.name) }}" formnovalidate aria-label="Удалить файл {{ f.name }}">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <footer class="step-foot" style="flex-basis:100%">
+    <a class="btn lg" href="{{ url_for('steps.step3') }}">Назад</a>
+    <button class="btn dark lg" type="submit" name="go" value="next">Далее: места практики</button>
+  </footer>
+</form>
+{% endblock %}

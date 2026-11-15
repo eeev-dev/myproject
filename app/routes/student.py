@@ -1,59 +1,39 @@
-from flask import Blueprint, render_template, request, redirect, jsonify, flash
-from flask_login import login_required, current_user
-from flask_wtf import file
-from sqlalchemy import text
-from sqlalchemy import desc, or_
+from flask import Blueprint, jsonify
 
+from ..api_errors import ApiError, payload
 from ..models.student import Student
-from ..models.group import Group
-from ..extensions import db
-
-from datetime import datetime
 
 student = Blueprint('student', __name__)
 
 
 @student.route('/ping', methods=['GET', 'POST'])
 def ping():
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
+    data = payload()
+    try:
+        student_id = int(data.get('student_id'))
+    except (TypeError, ValueError):
+        raise ApiError("Не указан или некорректен student_id", 400)
 
-    student_id = data.get('student_id')
-    student = Student.query.get(int(student_id))
-    if student:
-        return jsonify({
-            "success": True,
-            "message": "Сервер запущен"
-        }), 200
-    else:
-        return jsonify({"success": False, "message": "Пользователь не найден"}), 401
-    
+    if not Student.query.get(student_id):
+        raise ApiError("Студент не найден. Войдите заново", 401)
+    return jsonify({"success": True, "message": "Сервер запущен"}), 200
+
 
 @student.route('/student/login', methods=['GET', 'POST'])
 def login():
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "message": "Нет данных в теле запроса"}), 400
+    data = payload()
 
-    student_number = data.get('student_number')
+    student_number = str(data.get('student_number') or '').strip()
+    if not student_number:
+        raise ApiError("Введите номер студенческого билета", 400)
+
     student = Student.query.filter_by(student_number=student_number).first()
-    group = Group.query.filter_by(title=student.group).first()
+    if not student:
+        raise ApiError("Студент с таким номером не найден", 401)
 
-    if student and group:
-        return jsonify({
-            "success": True,
-            "id": student.id,
-            "term": get_term(group.year),
-            "message": "Авторизация успешна"
-        }), 200
-    else:
-        return jsonify({"success": False, "message": "Пользователь не найден"}), 401
-    
-
-def get_term(year):
-    month = datetime.now().month
-    if month in [7, 8, 9, 10, 12]:
-        return year * 2 - 1
-    else:
-        return year * 2
+    return jsonify({
+        "success": True,
+        "id": student.id,
+        "name": student.name,
+        "message": "Авторизация успешна"
+    }), 200

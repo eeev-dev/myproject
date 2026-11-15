@@ -1,6 +1,7 @@
 from docx import Document
 
-def create_doc(doc, interns, year, group, duration, head_teacher):
+def create_doc(doc, rows, year, group, duration, head_teacher):
+    """rows — список (ФИО, место практики) из отредактированной на сайте таблицы рапорта."""
 
     def replace_placeholder_in_paragraphs(doc, placeholder, new_text):
         for p in doc.paragraphs:
@@ -60,44 +61,7 @@ def create_doc(doc, interns, year, group, duration, head_teacher):
                 break
 
     table_data = [('№', 'Студенттердин ААА', 'Мекемелердин аты')]
-    for idx, intern in enumerate(interns, start=1):
-        place = intern.place
-        if (intern.place == 'Свое место практики' and intern.title != None):
-                place = intern.title 
-        table_data.append((str(idx), intern.name, place))
+    for idx, (name, place) in enumerate(rows, start=1):
+        table_data.append((str(idx), name or '', place or ''))
 
     replace_table_placeholder(doc, '{{TABLE}}', table_data)
-
-
-def find_teacher_and_subject(s):
-    start = s.find(']') + 1
-    first = s.find('[')
-    end = s.find('[', first + 1)
-
-    if 0 < start < end:
-        return s[start:end].strip()
-    else:
-        return ''
-    
-    
-def extract_subject(s):
-    caps = [i for i, c in enumerate(s) if c.isupper()]
-    if len(caps) >= 2:
-        return s[caps[0]:caps[1]]
-    else:
-        return ''
-    
-
-def extract_teacher(s):
-    parts = s.split()
-    return ' '.join(parts[-2:])
-
-
-def calculate_term(csv_term_is_autumn: bool, year: int) -> int:
-    if csv_term_is_autumn:
-        semester_offset = 1
-    else:
-        semester_offset = 2
-
-    term = (year - 1) * 2 + semester_offset
-    return term

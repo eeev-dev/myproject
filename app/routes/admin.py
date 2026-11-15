@@ -1,631 +1,352 @@
-from flask_login import login_user, logout_user, current_user, login_required
-from ..forms import RegistrationForm, LoginForm
-from ..extensions import db, bcrypt
-from ..functions import calculate_term, find_teacher_and_subject, extract_subject, extract_teacher
-import csv
 import io
-from flask import Blueprint, render_template, redirect, flash, url_for, request, current_app
 import os
 import re
-from sqlalchemy import text
+from datetime import date
 
-from ..models.user import User
-from ..models.group import Group
-from ..models.teacher import Teacher
+from docx import Document
+from flask import (Blueprint, render_template, redirect, flash, url_for, request,
+                   current_app, send_file, abort)
+from flask_login import login_required
+from sqlalchemy import func
+
+from ..extensions import db
+from ..functions import create_doc
 from ..models.student import Student
-from ..models.intern import Intern
-from ..models.graduate import Graduate
-from ..models.schedule import Schedule
-from ..models.topic import Topic
+from ..models.group import Group
+from ..models.place import Place
+from ..models.review import Review
+from ..models.deadline import Deadline
+from .. import state
+from ..state import OWN_PLACE
 
-admin = Blueprint('admin', __name__)
-
-
-@admin.route('/admin/login', methods=['GET', 'POST'])
-def login_admin():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(login=form.login.data).first()
-        if not user:
-            flash('Пользователь не найден. Проверьте логин или пароль', 'danger')
-            return render_template('admin/login.html', form=form)
-        if user.role == None or user.role == 'user':
-            user.role = 'user'
-            db.session.commit()
-            flash('Войдите как преподаватель', 'danger')
-            return render_template('user/login.html', form=form)
-        else:
-            if user and bcrypt.check_password_hash(user.password, form.password.data):
-                login_user(user, remember=form.remember.data)
-                return redirect(url_for('admin.panel'))
-            else:
-                flash(str(form.errors), "danger")
-    return render_template('admin/login.html', form=form)
+admin = Blueprint('admin', __name__, url_prefix='/admin')
 
 
-@admin.route('/admin/logout', methods=['GET', 'POST'])
+@admin.before_request
 @login_required
-def logout():
-    logout_user()
-    return redirect('/user/login')
+def _require_login():
+    pass
 
 
-# Группы
-
-@admin.route('/admin/groups', methods=['GET', 'POST'])
-@login_required
-def panel():
-    groups = Group.query.all()
-    return render_template('admin/group/table.html', groups=groups)
-
-
-@admin.route('/groups/<int:id>/update', methods=['GET', 'POST'])
-@login_required
-def update(id):
-    group = Group.query.get(id)
-    if request.method == 'POST':
-        group.id = request.form['id']  # Обязательное
-        group.title = request.form['title']  # Обязательное
-        group.year = request.form['year']  # Обязательное
-        group.head_teacher = request.form['head_teacher']  # Обязательное
-
-        try:
-            db.session.commit()
-            return redirect('/admin/groups')
-        except Exception as e:
-            flash(f'Ошибка при обновлении группы: {str(e)}', 'danger')
-    else:
-        return render_template('admin/group/edit.html', group=group)
-
-
-@admin.route('/groups/<int:id>/delete', methods=['GET', 'POST'])
-@login_required
-def delete(id):
-    group = Group.query.get(id)
+def _int(value, default=None):
     try:
-        db.session.delete(group)
-        db.session.commit()
-        flash('Успех', 'success')
-        return redirect('/admin/groups')
-    except Exception as e:
-        flash(f'Запись не была удалена: {str(e)}', 'danger')
-        return redirect('/admin/groups')
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
-@admin.route('/load/groups', methods=['GET', 'POST'])
-@login_required
-def upload_groups():
-    if request.method == 'POST':
-        file = request.files.get('file')
-
-        if not file or not file.filename.endswith('.csv'):
-            flash('Загрузите корректный CSV-файл', 'danger')
-
-        # Очистка таблицы
-        db.session.query(Group).delete()
-        db.session.execute(text("ALTER SEQUENCE group_id_seq RESTART WITH 1"))
-
-        # Чтение CSV-файла без сохранения
-        stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
-        reader = csv.reader(stream)
-
-        try:
-            # Чтение CSV с удалением BOM
-            file.stream.seek(0)  # вернуться в начало файла
-            stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
-            reader = csv.reader(stream)
-
-            unique_groups = {}  # словарь: {title: year}
-
-            for i, row in enumerate(reader, start=1):
-                try:
-                    # Проверка на пустую или короткую строку
-                    if not row or len(row) < 2:
-                        flash(f"Строка {i} пропущена: недостаточно столбцов", "warning")
-                        continue
-
-                    title = row[1].strip()
-                    year_str = row[0].strip()
-                    if not year_str:
-                        flash(f"Строка {i} пропущена: пустой год", "warning")
-                        continue
-
-                    year = year_str[0]  # берем только первый символ года
-
-                    # Добавляем только уникальные title
-                    if title not in unique_groups:
-                        unique_groups[title] = year
-
-                except Exception as e:
-                    flash(f"Ошибка в строке {i}: {e}", "danger")
-
-            # Вставка уникальных групп в базу
-            for title, year in unique_groups.items():
-                try:
-                    group = Group(title=title, year=year)
-                    db.session.add(group)
-                except Exception as e:
-                    flash(f"Ошибка при добавлении группы '{title}': {e}", "danger")
-
-            try:
-                db.session.commit()
-                flash(f"Импортировано {len(unique_groups)} уникальных групп", "success")
-                return redirect('/admin/groups')
-            except Exception as e:
-                db.session.rollback()
-                flash(f"Ошибка при сохранении в базе данных: {e}", "danger")
-
-        except Exception as e:
-            flash(f"Ошибка при чтении CSV: {e}", "danger")
-    else:
-        return render_template('admin/group/load.html')
-
-#Преподаватели
- 
-@admin.route('/admin/teachers', methods=['GET', 'POST'])
-@login_required
-def teachers():
-    teachers = Teacher.query.all()
-    return render_template('admin/teacher/table.html', teachers=teachers)
+def place_text(student):
+    if student.place == OWN_PLACE and student.title:
+        return student.title
+    return student.place or ''
 
 
-@admin.route('/teachers/<int:id>/update', methods=['GET', 'POST'])
-@login_required
-def update_teacher(id):
-    teacher = Teacher.query.get(id)
-    if request.method == 'POST':
-        teacher.id = request.form['id']  # Обязательное
-        teacher.name = request.form['name']  # Обязательное
-        teacher.url = request.form['url']  # Обязательное
+# ---------------- Главная ----------------
 
-        try:
-            db.session.commit()
-            return redirect('/admin/teachers')
-        except Exception as e:
-            flash(f'Ошибка при обновлении преподавателя: {str(e)}', 'danger')
-    else:
-        return render_template('admin/teacher/edit.html', teacher=teacher)
-
-
-@admin.route('/groups/<int:id>/delete', methods=['GET', 'POST'])
-@login_required
-def delete_teacher(id):
-    group = Group.query.get(id)
-    try:
-        db.session.delete(group)
-        db.session.commit()
-        flash('Успех', 'success')
-        return redirect('/admin/teachers')
-    except Exception as e:
-        flash(f'Запись не была удалена: {str(e)}', 'danger')
-        return redirect('/admin/teachers')
-
-
-@admin.route('/load/teachers', methods=['GET', 'POST'])
-@login_required
-def upload_teachers():
-    if request.method == 'POST':
-        file = request.files.get('file')
-
-        if not file or not file.filename.endswith('.csv'):
-            flash('Загрузите корректный CSV-файл', 'danger')
-
-        # Очистка таблицы
-        db.session.query(Teacher).delete()
-        db.session.execute(text("ALTER SEQUENCE teacher_id_seq RESTART WITH 1"))
-
-        # Чтение CSV-файла без сохранения
-        file.stream.seek(0)
-        content = file.stream.read().decode("utf-8-sig")
-        reader = csv.reader(content.splitlines())
-
-        try:
-            for row in reader:
-                teacher = Teacher(
-                    name=row[0],
-                    url=row[1]
-                )
-                db.session.add(teacher)
-
-            try:
-                db.session.commit()
-                flash("Данные успешно загружены", 'success')
-                return redirect('/admin/teachers')
-            except Exception as e:
-                flash(f'Ошибка при добавлении: {str(e)}', 'danger')
-            
-        except Exception as e:
-            flash(f"Ошибка при обработке CSV: {e}", "danger")
-
-    else:
-        return render_template('admin/teacher/load.html')
-    
-#Студенты
- 
-@admin.route('/admin/students', methods=['GET', 'POST'])
-@login_required
-def students():
+@admin.route('/')
+def dashboard():
+    d = Deadline.current()
     students = Student.query.all()
-    return render_template('admin/student/table.html', students=students)
+    total = len(students)
+    applied = [s for s in students if s.place]
+    own = sum(1 for s in applied if s.place == OWN_PLACE)
+
+    group_rows = []
+    for g in Group.query.order_by(Group.title).all():
+        members = [s for s in students if s.group == g.title]
+        done = sum(1 for s in members if s.place)
+        group_rows.append({'group': g, 'total': len(members), 'done': done,
+                           'left': len(members) - done,
+                           'pct': round(done / len(members) * 100) if members else 0})
+
+    places = Place.query.order_by(Place.title).all()
+
+    steps = {s['n']: s['state'] for s in state.steps_state()}
+    warnings = []
+    if not (d and d.apply_set):
+        warnings.append(('Не указан срок набора на практику',
+                         'Студенты не увидят, до какого числа можно выбрать место.', 3))
+    if not (d and d.practice_set):
+        warnings.append(('Не указан срок прохождения практики',
+                         'Студенты не увидят даты практики в приложении, а в рапорте будут пустые даты.', 3))
+    if steps[2] != 'done' and Group.query.count():
+        warnings.append(('Не всем группам назначены руководители',
+                         'Руководитель нужен для приложения и рапорта.', 2))
+    if steps[6] != 'done':
+        warnings.append(('Приложение не отправлено студентам',
+                         'Студенты не смогут выбрать место, пока не установят приложение.', 6))
+
+    days_left = None
+    if d and d.apply_end:
+        days_left = (d.apply_end - date.today()).days
+
+    return render_template('admin/dashboard.html', active='dashboard', deadline=d,
+                           total=total, applied=len(applied), own=own,
+                           not_applied=total - len(applied),
+                           pct=round(len(applied) / total * 100) if total else 0,
+                           group_rows=group_rows, places=places, warnings=warnings,
+                           days_left=days_left)
 
 
-@admin.route('/students/<int:id>/update', methods=['GET', 'POST'])
-@login_required
+# ---------------- Студенты ----------------
+
+@admin.route('/students')
+def students():
+    students = Student.query.order_by(Student.group, Student.name).all()
+    groups = [g[0] for g in db.session.query(Student.group).distinct().order_by(Student.group).all() if g[0]]
+    places = [p.title for p in Place.query.order_by(Place.title).all()]
+    return render_template('admin/students.html', active='students', students=students,
+                           groups=groups, places=places,
+                           own_place=OWN_PLACE, place_text=place_text)
+
+
+def _fill_student(student, form):
+    student.student_number = form.get('student_number', '').strip()
+    student.name = form.get('name', '').strip()
+    student.group = form.get('group', '').strip()
+    place = form.get('place', '').strip()
+    if place == OWN_PLACE:
+        student.title = form.get('title', '').strip() or student.title
+    student.place = place or None
+
+
+@admin.route('/students/add', methods=['POST'])
+def add_student():
+    student = Student()
+    _fill_student(student, request.form)
+    if not student.name:
+        flash('Укажите ФИО студента', 'danger')
+        return redirect(url_for('admin.students'))
+    db.session.add(student)
+    state.recount_free_places()
+    db.session.commit()
+    flash('Студент добавлен', 'success')
+    return redirect(url_for('admin.students'))
+
+
+@admin.route('/students/<int:id>/update', methods=['POST'])
 def update_student(id):
-    student = Student.query.get(id)
-    if request.method == 'POST':
-        student.id = request.form['id']
-        student.name = request.form['name']
-        student.student_number = request.form['student_number']
-        student.score = request.form['score']
-        student.group = request.form['group']
-
-        try:
-            db.session.commit()
-            return redirect('/admin/students')
-        except Exception as e:
-            flash(f'Ошибка при обновлении студента: {str(e)}', 'danger')
-    else:
-        return render_template('admin/student/edit.html', student=student)
+    student = Student.query.get_or_404(id)
+    _fill_student(student, request.form)
+    state.recount_free_places()
+    try:
+        db.session.commit()
+        flash('Изменения сохранены', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при обновлении студента: {e}', 'danger')
+    return redirect(url_for('admin.students', _anchor=f'student-{id}'))
 
 
-@admin.route('/students/<int:id>/delete', methods=['GET', 'POST'])
-@login_required
+@admin.route('/students/<int:id>/delete', methods=['POST'])
 def delete_student(id):
-    student = Student.query.get(id)
+    student = Student.query.get_or_404(id)
+    db.session.delete(student)
+    state.recount_free_places()
+    db.session.commit()
+    flash('Студент удалён', 'success')
+    return redirect(url_for('admin.students'))
+
+
+# ---------------- Группы ----------------
+
+@admin.route('/groups')
+def groups():
+    counts = dict(db.session.query(Student.group, func.count(Student.id)).group_by(Student.group).all())
+    done = dict(db.session.query(Student.group, func.count(Student.id))
+                .filter(Student.place.isnot(None), Student.place != '').group_by(Student.group).all())
+    rows = []
+    for g in Group.query.order_by(Group.title).all():
+        total = counts.get(g.title, 0)
+        d = done.get(g.title, 0)
+        rows.append({'group': g, 'total': total, 'done': d, 'pct': round(d / total * 100) if total else 0})
+    return render_template('admin/groups.html', active='groups', rows=rows)
+
+
+def _fill_group(group, form):
+    old_title = group.title
+    group.title = form.get('title', '').strip()
+    group.year = _int(form.get('year'))
+    group.head_teacher = form.get('head_teacher', '').strip() or None
+    if old_title and old_title != group.title:
+        Student.query.filter_by(group=old_title).update({'group': group.title})
+
+
+@admin.route('/groups/add', methods=['POST'])
+def add_group():
+    group = Group()
+    _fill_group(group, request.form)
+    if not group.title:
+        flash('Укажите название группы', 'danger')
+    else:
+        db.session.add(group)
+        db.session.commit()
+        flash('Группа добавлена', 'success')
+    return redirect(url_for('admin.groups'))
+
+
+@admin.route('/groups/<int:id>/update', methods=['POST'])
+def update_group(id):
+    group = Group.query.get_or_404(id)
+    _fill_group(group, request.form)
     try:
-        db.session.delete(student)
         db.session.commit()
-        flash('Успех', 'success')
-        return redirect('/admin/students')
+        flash('Изменения сохранены', 'success')
     except Exception as e:
-        flash(f'Ошибка при удалении студента: {str(e)}', 'danger')
-        return redirect('/admin/students')
-
-
-@admin.route('/load/students', methods=['GET', 'POST'])
-@login_required
-def upload_students():
-    if request.method == 'POST':
-        file = request.files.get('file')
-
-        if not file or not file.filename.endswith('.csv'):
-            flash('Загрузите корректный CSV-файл', 'danger')
-            return redirect(request.url)
-
-        try:
-            # Очистка таблицы Student и сброс последовательности
-            db.session.query(Student).delete()
-            db.session.execute(text("ALTER SEQUENCE student_id_seq RESTART WITH 1"))
-
-            # Опционально: очистка других связанных таблиц
-            db.session.query(Intern).delete()
-            db.session.execute(text("ALTER SEQUENCE intern_id_seq RESTART WITH 1"))
-            db.session.query(Graduate).delete()
-            db.session.execute(text("ALTER SEQUENCE graduate_id_seq RESTART WITH 1"))
-            db.session.commit()
-
-            # Чтение CSV с удалением BOM
-            file.stream.seek(0)
-            content = file.stream.read().decode("utf-8-sig")
-            reader = csv.reader(content.splitlines())
-
-            for i, row in enumerate(reader, start=1):
-                try:
-                    # Проверка на пустую или некорректную строку
-                    if not row or len(row) < 4:
-                        flash(f"Строка {i} пропущена: недостаточно столбцов", "warning")
-                        continue
-
-                    # Сохраняем данные студента
-                    name = row[2].strip()
-                    group = row[1].strip()
-                    student_number = row[3].strip()
-
-                    if not name or not group or not student_number:
-                        flash(f"Строка {i} пропущена: пустые поля", "warning")
-                        continue
-
-                    # Создаем Student
-                    student = Student(
-                        name=name,
-                        group=group,
-                        student_number=student_number
-                    )
-                    db.session.add(student)
-                    db.session.flush()  # чтобы получить student.id до commit
-
-                except Exception as e:
-                    flash(f"Ошибка в строке {i}: {e}", "danger")
-
-            # Сохраняем все записи
-            try:
-                db.session.commit()
-                flash("Данные успешно загружены", "success")
-            except Exception as e:
-                db.session.rollback()
-                flash(f"Ошибка при сохранении в базе данных: {e}", "danger")
-
-        except Exception as e:
-            flash(f"Ошибка при обработке CSV: {e}", "danger")
-
-        return redirect('/admin/students')
-
-    return render_template('admin/student/load.html')
-    
-# Расписание
-
-@admin.route('/admin/schedule', methods=['GET', 'POST'])
-@login_required
-def schedule():
-    schedule = Schedule.query.all()
-    return render_template('admin/schedule/table.html', schedule=schedule)
-
-
-@admin.route('/schedule/<int:id>/update', methods=['GET', 'POST'])
-@login_required
-def update_schedule(id):
-    schedule_item = Schedule.query.get(id)
-    if request.method == 'POST':
-        schedule_item.id = request.form['id']
-        schedule_item.title = request.form['title']
-        schedule_item.type = request.form['type']
-        schedule_item.teacher = request.form['teacher']
-        schedule_item.group = request.form['group']
-        schedule_item.term = request.form['term']
-        schedule_item.day = request.form['day']
-        schedule_item.time = request.form['time']
-        schedule_item.parity = request.form['parity']
-        schedule_item.is_online = request.form['is_online']
-        schedule_item.room = request.form['room']
-
-        try:
-            db.session.commit()
-            return redirect('/admin/schedule')
-        except Exception as e:
-            flash(f'Ошибка при обновлении расписания: {str(e)}', 'danger')
-    else:
-        return render_template('admin/schedule/edit.html', schedule_item=schedule_item)
-
-
-@admin.route('/schedule/<int:id>/delete', methods=['GET', 'POST'])
-@login_required
-def delete_schedule_item(id):
-    schedule_item = Schedule.query.get(id)
-    try:
-        db.session.delete(schedule_item)
-        db.session.commit()
-        flash('Успех', 'success')
-        return redirect('/admin/schedule')
-    except Exception as e:
-        flash(f'Запись не была удалена: {str(e)}', 'danger')
-        return redirect('/admin/schedule')
-
-
-@admin.route('/load/schedule', methods=['GET', 'POST'])
-@login_required
-def upload_schedule():
-    if request.method == 'POST':
-        file = request.files.get('file')
-
-        if not file or not file.filename.endswith('.csv'):
-            flash('Загрузите корректный CSV-файл', 'danger')
-
-        # Очистка таблицы
-        db.session.query(Schedule).delete()
-        db.session.execute(text("ALTER SEQUENCE schedule_id_seq RESTART WITH 1"))
-
-        # Чтение CSV-файла без сохранения
-        stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
-        reader = csv.reader(stream)
-
-        try:
-            # Чтение CSV с удалением BOM
-            file.stream.seek(0)  # вернуться в начало файла
-            stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
-            reader = csv.reader(stream)
-
-            for row in reader:
-                if len(row) < 4:
-                    continue
-
-                time = row[0].strip()
-                group = re.search(r'группа:\s*([^,]+)', row[1])
-                day = row[2].strip()
-                lesson_text = row[3].strip()
-
-                if not lesson_text:
-                    continue
-
-                group_csv = group.group(1) if group else ""
-
-                group_bd = Group.query.filter_by(title=group_csv).first()
-
-                if not group_bd:
-                    flash(f"Группа '{group_csv}' не найдена. Загрузите ее в разделе 'Группы'", "warning")
-                    continue
-
-                term = calculate_term(csv_term_is_autumn=("Осен" in row[1]), year=int(group_bd.year))
-
-                # тип занятия
-                type_match = re.search(r'\[(.*?)\]', lesson_text)
-                lesson_type = type_match.group(1) if type_match else ""
-
-                # аудитория
-                if re.search(r'\bonline\b', lesson_text, re.IGNORECASE):
-                    room = ""
-                else:
-                    room_match = re.search(r'ауд\.\s*([^\s]+)', lesson_text)
-                    room = room_match.group(1) if room_match else ""
-
-                # преподаватель (Фамилия И.О.)
-                teacher_match = re.search(r'([А-ЯЁ][а-яё]+\s+[А-Я]\.[А-Я]\.)', lesson_text)
-                teacher = teacher_match.group(1) if teacher_match else ""
-
-                # название предмета
-                title = lesson_text
-                title = re.sub(r'\[.*?\]', '', title)        # убрать [Лк], [нед...]
-                title = re.sub(r'[А-ЯЁ][а-яё]+\s+[А-Я]\.[А-Я]\.', '', title)  # убрать преподавателя
-                title = re.sub(r'\s*ауд\..*$', '', title)    # убрать аудиторию
-                title = re.sub(r'\bonline\b', '', title, flags=re.IGNORECASE)
-                title = re.sub(r'\s+', ' ', title).strip()
-
-                schedule = Schedule(
-                    title=title,
-                    type=lesson_type,
-                    teacher=teacher,
-                    group=group_bd.title,
-                    term=term,
-                    day=day,
-                    time=time,
-                    parity="всегда",
-                    is_online=1 if "nline" in row[3] else 0,
-                    room=room
-                )
-
-                db.session.add(schedule)
-
-            try:
-                db.session.commit()
-                flash("Данные успешно загружены", 'success')
-                return redirect('/admin/schedule')
-            except Exception as e:
-                db.session.rollback()
-                flash(f"Ошибка при сохранении в базе данных: {e}", "danger")
-
-        except Exception as e:
-            flash(f"Ошибка при чтении CSV: {e}", "danger")
-            return redirect('/admin/schedule')
-
-    else:
-        return render_template('admin/schedule/load.html')
-    
-#Расписание экзаменов
-
-@admin.route('/admin/exam', methods=['GET', 'POST'])
-def save_schedule():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            flash("Файл не найден в запросе", 'danger')
-            return redirect('/admin/exam')
-
-        file = request.files['file']
-
-        # Проверка расширения .docx
-        if not file.filename.endswith('.docx'):
-            flash('Допустим только .docx файл', 'danger')
-            return redirect('/admin/exam')
-
-        # Проверка названия: Расписание1.docx ... Расписание4.docx
-        filename = file.filename
-        if not re.fullmatch(r"Расписание[1-4]\.docx", filename):
-            flash("Название файла должно быть 'Расписание' + цифра от 1 до 4", 'danger')
-            return redirect('/admin/exam')
-
-        upload_path = current_app.config['UPLOAD_PATH']
-        os.makedirs(upload_path, exist_ok=True)
-
-        save_path = os.path.join(upload_path, filename)
-        file.save(save_path)
-
-        flash("Файл успешно сохранён", 'success')
-        return redirect('/admin/exam')
-
-    # Если GET — возвращаем HTML-шаблон
-    return render_template('admin/exam/exam.html')
-
-
-@admin.route('/admin/clear-exams', methods=['POST'])
-def clear_schedules():
-    upload_path = current_app.config['UPLOAD_PATH']
-
-    if not os.path.exists(upload_path):
-        flash('Папка загрузки не найдена', 'danger')
-        return redirect('/admin/exam')
-
-    deleted_files = []
-    for filename in os.listdir(upload_path):
-        if "Расписание" in filename:
-            file_path = os.path.join(upload_path, filename)
-            try:
-                os.remove(file_path)
-                deleted_files.append(filename)
-            except Exception as e:
-                flash(f"Ошибка при удалении {filename}: {str(e)}", 'danger')
-                return redirect('/admin/exam')
-
-    if deleted_files:
-        flash(f"Удалены файлы: {', '.join(deleted_files)}", 'success')
-        return redirect('/admin/exam')
-    else:
-        flash("Нет файлов для удаления", 'danger')
-        return redirect('/admin/exam')
-    
-# Темы ВКР
-
-@admin.route('/admin/topics', methods=['GET', 'POST'])
-@login_required
-def topics():
-    topics = Topic.query.all()
-    return render_template('admin/topic/table.html', topics=topics)
-
-
-@admin.route('/topic/<int:id>/update', methods=['GET', 'POST'])
-@login_required
-def update_topics(id):
-    topic = Topic.query.get(id)
-    if request.method == 'POST':
-        topic.id = request.form['id']
-        topic.title = request.form['title']
-
-        try:
-            db.session.commit()
-            return redirect('/admin/topics')
-        except Exception as e:
-            flash(str(e), 'danger')
-    else:
-        return render_template('admin/topic/edit.html', topic=topic)
-
-
-@admin.route('/topic/<int:id>/delete', methods=['GET', 'POST'])
-@login_required
-def delete_topic(id):
-    topic = Topic.query.get(id)
-    try:
-        db.session.delete(topic)
-        db.session.commit()
-        flash('Успех', 'success')
-        return redirect('/admin/topics')
-    except Exception as e:
-        flash(f'Запись не была удалена: {str(e)}', 'danger')
-        return redirect('/admin/topics')
-
-
-@admin.route('/load/topics', methods=['GET', 'POST'])
-@login_required
-def upload_topics():
-    if request.method == 'POST':
-        file = request.files.get('file')
-
-        if not file or not file.filename.endswith('.csv'):
-            flash('Загрузите корректный CSV-файл', 'danger')
-
-        # Очистка таблицы
-        db.session.query(Topic).delete()
-        db.session.execute(text("ALTER SEQUENCE topic_id_seq RESTART WITH 1"))
-
-        # Чтение CSV-файла без сохранения
-        stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
-        reader = csv.reader(stream)
-
-        for row in reader:
-            topic = Topic(
-                title=row[0]
-            )
-            db.session.add(topic)
-
-        db.session.commit()
-        flash("Данные успешно загружены", 'success')
-        return redirect('/admin/topics')
-    else:
-        return render_template('admin/topic/load.html')
+        db.session.rollback()
+        flash(f'Ошибка при обновлении группы: {e}', 'danger')
+    return redirect(url_for('admin.groups'))
+
+
+@admin.route('/groups/<int:id>/delete', methods=['POST'])
+def delete_group(id):
+    group = Group.query.get_or_404(id)
+    Student.query.filter_by(group=group.title).delete()
+    db.session.delete(group)
+    state.recount_free_places()
+    db.session.commit()
+    flash('Группа и её студенты удалены', 'success')
+    return redirect(url_for('admin.groups'))
+
+
+# ---------------- Места практики ----------------
+
+@admin.route('/places')
+def places():
+    stats = dict((pid, (cnt, avg)) for pid, cnt, avg in
+                 db.session.query(Review.id_place, func.count(Review.id), func.avg(Review.rating))
+                 .group_by(Review.id_place).all())
+    rows = []
+    for p in Place.query.order_by(Place.title).all():
+        cnt, avg = stats.get(p.id, (0, None))
+        rows.append({'place': p, 'reviews': cnt,
+                     'rating': f'{avg:.1f}'.replace('.', ',') if avg else '—',
+                     'pct': min(100, round(p.taken / p.max_places * 100)) if p.max_places else 0})
+    return render_template('admin/places.html', active='places', rows=rows)
+
+
+def fill_place(place, form):
+    old_title = place.title
+    place.title = form.get('title', '').strip()
+    place.occupation = form.get('occupation', '').strip()
+    place.max_places = max(1, _int(form.get('max_places'), 1))
+    if 'requirements' in form:
+        place.requirements = form.get('requirements', '').strip()
+    if 'outlook' in form:
+        place.outlook = form.get('outlook', '').strip()
+    if 'contacts' in form:
+        place.contacts = form.get('contacts', '').strip()
+    if old_title and old_title != place.title:
+        Student.query.filter_by(place=old_title).update({'place': place.title})
+    if place.places is None:
+        place.places = place.max_places
+
+
+def delete_place_record(place):
+    Student.query.filter_by(place=place.title).update({'place': None})
+    db.session.delete(place)
+
+
+@admin.route('/places/add', methods=['POST'])
+def add_place():
+    place = Place()
+    fill_place(place, request.form)
+    if not place.title:
+        flash('Укажите название предприятия', 'danger')
+        return redirect(request.referrer or url_for('admin.places'))
+    db.session.add(place)
+    db.session.flush()
+    state.recount_free_places()
+    db.session.commit()
+    flash('Место добавлено', 'success')
+    return redirect(request.referrer or url_for('admin.places'))
+
+
+@admin.route('/places/<int:id>/update', methods=['POST'])
+def update_place(id):
+    place = Place.query.get_or_404(id)
+    fill_place(place, request.form)
+    state.recount_free_places()
+    db.session.commit()
+    flash('Изменения сохранены', 'success')
+    return redirect(request.form.get('next') or url_for('admin.places'))
+
+
+@admin.route('/places/<int:id>/delete', methods=['POST'])
+def delete_place(id):
+    delete_place_record(Place.query.get_or_404(id))
+    db.session.commit()
+    flash('Место удалено', 'success')
+    return redirect(request.referrer or url_for('admin.places'))
+
+
+# ---------------- Отзывы ----------------
+
+@admin.route('/reviews')
+def reviews():
+    places = Place.query.order_by(Place.title).all()
+    counts = dict(db.session.query(Review.id_place, func.count(Review.id)).group_by(Review.id_place).all())
+    place_id = request.args.get('place_id', type=int) or (places[0].id if places else None)
+    current = Place.query.get(place_id) if place_id else None
+    items = (Review.query.filter_by(id_place=place_id).order_by(Review.date.desc()).all()
+             if place_id else [])
+    ratings = [r.rating for r in items if r.rating is not None]
+    avg = f'{sum(ratings) / len(ratings):.1f}'.replace('.', ',') if ratings else '—'
+    return render_template('admin/reviews.html', active='reviews', places=places, counts=counts,
+                           current=current, reviews=items, avg=avg)
+
+
+@admin.route('/reviews/<int:id>/delete', methods=['POST'])
+def delete_review(id):
+    review = Review.query.get_or_404(id)
+    place_id = review.id_place
+    db.session.delete(review)
+    db.session.commit()
+    flash('Отзыв удалён', 'success')
+    return redirect(url_for('admin.reviews', place_id=place_id))
+
+
+# ---------------- Рапорт ----------------
+
+@admin.route('/report')
+def report():
+    d = Deadline.current()
+    groups = Group.query.order_by(Group.title).all()
+    leads = {g.title: g.head_teacher or '' for g in groups}
+    students = [{
+        'id': s.id, 'name': s.name or '', 'group': s.group or '',
+        'place': place_text(s), 'has_place': bool(s.place), 'lead': leads.get(s.group, ''),
+    } for s in Student.query.order_by(Student.group, Student.name).all()]
+    duration = ''
+    year = ''
+    if d and d.practice_set:
+        duration = f'{d.practice_start:%d.%m.%Y} – {d.practice_end:%d.%m.%Y}'
+        year = str(d.practice_start.year)
+    return render_template('admin/report.html', active='report', deadline=d,
+                           students=students, groups=[{'title': g.title, 'lead': g.head_teacher or ''} for g in groups],
+                           duration=duration, year=year)
+
+
+@admin.route('/report/docx', methods=['POST'])
+def report_docx():
+    data = request.get_json(silent=True) or {}
+    rows = [(r.get('name', '').strip(), r.get('place', '').strip())
+            for r in data.get('rows', []) if r.get('name', '').strip()]
+    if not rows:
+        return {'success': False, 'message': 'В рапорте нет студентов'}, 400
+
+    year = data.get('year', '')
+    group = data.get('group', '')
+    duration = data.get('duration', '')
+    head_teacher = data.get('head_teacher', '')
+
+    doc = Document(os.path.join(current_app.config['UPLOAD_PATH'], 'template.docx'))
+    create_doc(doc, rows, year, group, duration, head_teacher)
+
+    output = io.BytesIO()
+    doc.save(output)
+    output.seek(0)
+    safe_group = re.sub(r'[^\w\-, ]+', '', group)[:60] or 'группы'
+    return send_file(output, as_attachment=True,
+                     download_name=f'Произв.практика_{year}_{safe_group}.docx',
+                     mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')

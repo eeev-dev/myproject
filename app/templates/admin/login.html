@@ -1,16 +1,33 @@
-{% extends 'main/base.html' %}
-
-{% block title %}Авторизация{% endblock %}
-
-{% block content %}
-<form method="POST" enctype="multipart/form-data" class="form-control d-flex flex-column gap-2">
-    {{ form.csrf_token }}
-    {{ form.login(class="form-control", placeholder="Логин") }}
-    {{ form.password(class="form-control", placeholder="Пароль") }}
-    <div class="d-flex flex-row justify-content-center gap-2">
-        {{ form.remember.label }} {{ form.remember(class="form-check") }}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вход — Практика</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+<div class="login-wrap">
+  <form class="login-card" method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="nav-brand" style="padding:0">
+      <span class="nav-logo" aria-hidden="true"></span>
+      <span><b>Практика</b><small>Кабинет кафедры</small></span>
     </div>
-    {{ form.submit(class="btn btn-success") }}
-</form>
-
-{% endblock %}
+    <h1 style="font-size:26px; font-weight:600; letter-spacing:-.02em">Вход</h1>
+    {% include 'admin/_flash.html' %}
+    <div class="field">
+      <label for="login">Логин</label>
+      {{ form.login(class_='input', id='login', autocomplete='username') }}
+    </div>
+    <div class="field">
+      <label for="password">Пароль</label>
+      {{ form.password(class_='input', id='password', autocomplete='current-password') }}
+    </div>
+    <label style="display:flex; align-items:center; gap:10px; font-size:14px">{{ form.remember(style='width:18px;height:18px') }} Запомнить меня</label>
+    <button class="btn dark lg" type="submit">Войти</button>
+  </form>
+</div>
+</body>
+</html>

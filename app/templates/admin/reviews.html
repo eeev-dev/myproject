@@ -1,0 +1,57 @@
+{% extends 'admin/base.html' %}
+{% block title %}Отзывы о местах{% endblock %}
+{% block content %}
+<header class="head">
+  <div>
+    <a class="link" style="padding:6px 0" href="{{ url_for('admin.places') }}">← Места практики</a>
+    <h1>Отзывы о местах</h1>
+  </div>
+</header>
+
+{% if places %}
+<div class="chips" role="group" aria-label="Место практики" style="gap:8px">
+  {% for p in places %}
+  <a class="chip lg" style="text-decoration:none" href="{{ url_for('admin.reviews', place_id=p.id) }}" aria-pressed="{{ 'true' if current and current.id == p.id else 'false' }}">{{ p.title }} <small>· {{ counts.get(p.id, 0) }}</small></a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if current %}
+<section class="hero" style="padding:24px; border-radius:24px; align-items:center; box-shadow:none">
+  <div style="flex:1 1 320px; display:flex; flex-direction:column; gap:4px">
+    <h2 style="font-size:24px; font-weight:600; letter-spacing:-.01em">{{ current.title }}</h2>
+    <span style="font-size:14px">{{ current.occupation or '' }}</span>
+  </div>
+  <div style="display:flex; gap:10px">
+    <div class="stat"><span>Средняя оценка</span><b class="num" style="font-size:26px">{{ avg }}</b></div>
+    <div class="stat"><span>Отзывов</span><b class="num" style="font-size:26px">{{ reviews|length }}</b></div>
+  </div>
+</section>
+
+<div style="display:flex; flex-direction:column; gap:10px">
+  {% for r in reviews %}
+  <form class="tr" style="display:flex; flex-wrap:wrap; gap:12px 24px; padding:20px; border-radius:22px; background:#fff; border:1.5px solid transparent" method="post" action="{{ url_for('admin.delete_review', id=r.id) }}">
+    <div style="flex:1 1 480px; min-width:0; display:flex; flex-direction:column; gap:8px">
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px">
+        <span class="tag">{{ r.rating }} из 5</span>
+        {% if r.date %}<span class="muted" style="font-size:13px">{{ r.date.strftime('%d.%m.%Y') }}</span>{% endif %}
+      </div>
+      <p style="margin:0; font-size:15px; line-height:1.55; color:var(--ink-2)">{{ r.text }}</p>
+    </div>
+    <div style="flex:0 0 auto; display:flex; align-items:flex-start; gap:6px">
+      <span class="actions-view"><button class="btn sm danger" style="border:1px solid rgba(140,42,28,.3); background:#fff; height:40px" type="button" data-ask-delete>Удалить</button></span>
+      <span class="confirm">
+        <span>Удалить отзыв?</span>
+        <button class="btn sm danger solid" style="height:40px" type="submit">Да, удалить</button>
+        <button class="btn sm soft" style="height:40px" type="button" data-cancel>Отмена</button>
+      </span>
+    </div>
+  </form>
+  {% else %}
+  <p class="empty card">Отзывов пока нет</p>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty card">Сначала добавьте места практики.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'admin/steps/_layout.html' %}
+{% block title %}Шаг 5 · Места практики{% endblock %}
+{% block step %}
+<header class="head"><div>
+  <span class="eyebrow">Шаг 5 из 6</span>
+  <h1>Добавьте места практики</h1>
+  <p class="lead">Студенты увидят эти места в приложении вместе с количеством свободных мест, требованиями и перспективами.</p>
+</div></header>
+
+<div class="split">
+  <form class="card form" style="flex:1 1 380px; min-width:0" method="post" action="{{ url_for('steps.step5') }}">
+    <h2>{{ 'Изменить место' if edit else 'Новое место' }}</h2>
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <div class="field"><label for="pl-name">Название предприятия</label>
+      <input class="input" id="pl-name" name="title" required value="{{ edit.title if edit else '' }}" placeholder="Например, ГП «Инфоцентр»"></div>
+    <div class="field"><label for="pl-dept">Занятие</label>
+      <textarea class="textarea" id="pl-dept" name="occupation" rows="3" placeholder="Специальность (опционально)">{{ edit.occupation or '' if edit else '' }}</textarea></div>
+    <div class="row-21">
+      <div class="field"><label for="pl-cap">Всего мест</label>
+        <input class="input" id="pl-cap" name="max_places" type="number" min="1" required value="{{ edit.max_places if edit else '' }}"></div>
+      <div class="field"><label>Свободно</label>
+        <input class="input" value="{{ edit.places if edit else '—' }}" disabled title="Считается автоматически по студентам, выбравшим это место"></div>
+    </div>
+    <div class="field"><label for="pl-req">Требования</label>
+      <textarea class="textarea" id="pl-req" name="requirements" rows="3" placeholder="Требования (опционально)">{{ edit.requirements or '' if edit else '' }}</textarea></div>
+    <div class="field"><label for="pl-pros">Перспективы</label>
+      <textarea class="textarea" id="pl-pros" name="outlook" rows="3" placeholder="Перспективы (опционально)">{{ edit.outlook or '' if edit else '' }}</textarea></div>
+    <div class="field"><label for="pl-contacts">Контакты</label>
+      <textarea class="textarea" id="pl-contacts" name="contacts" rows="3" placeholder="Контакты (опционально)">{{ edit.contacts or '' if edit else '' }}</textarea></div>
+    <div class="actions">
+      <button class="btn dark lg" type="submit">{{ 'Сохранить' if edit else 'Добавить место' }}</button>
+      {% if edit %}<a class="btn lg" href="{{ url_for('steps.step5') }}">Отмена</a>{% endif %}
+    </div>
+  </form>
+
+  <section style="flex:1 1 420px; min-width:0; display:flex; flex-direction:column; gap:10px" aria-labelledby="pl-list">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; padding:0 4px">
+      <h2 id="pl-list" style="font-size:18px; font-weight:600">Добавлено: {{ places|length }}</h2>
+      <a class="link" href="{{ url_for('admin.places') }}">Открыть таблицу мест</a>
+    </div>
+    {% for p in places %}
+    <article style="display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:16px; border-radius:20px; background:#fff; border:1.5px solid {{ '#4F8FCB' if edit and edit.id == p.id else 'transparent' }}">
+      <span style="flex:1 1 200px; display:flex; flex-direction:column; gap:3px; min-width:0">
+        <b style="font-size:15px">{{ p.title }}</b><span class="muted" style="font-size:13px; white-space:pre-line">{{ p.occupation or '' }}</span>
+      </span>
+      <span class="tag num" title="Свободно из всего">{{ p.places }} из {{ p.max_places }} мест</span>
+      <span class="tr" style="display:flex; gap:4px; padding:0; min-height:0; border:0">
+        <form method="post" action="{{ url_for('steps.delete_place', id=p.id) }}" style="display:contents">
+          <span class="actions-view" style="display:flex; gap:4px">
+            <a class="btn sm soft" style="height:40px" href="{{ url_for('steps.step5', edit=p.id) }}">Изменить</a>
+            <button class="btn sm danger" style="height:40px" type="button" data-ask-delete aria-label="Удалить {{ p.title }}">Удалить</button>
+          </span>
+          <span class="confirm"><span>Удалить?</span>
+            <button class="btn sm danger solid" type="submit">Да</button><button class="btn sm soft" type="button" data-cancel>Нет</button></span>
+        </form>
+      </span>
+    </article>
+    {% else %}
+    <p class="empty card">Пока ни одного места</p>
+    {% endfor %}
+  </section>
+</div>
+
+<footer class="step-foot">
+  <a class="btn lg" href="{{ url_for('steps.step4') }}">Назад</a>
+  <a class="btn dark lg" href="{{ url_for('steps.step6') }}">Далее: приложение студентам</a>
+</footer>
+{% endblock %}

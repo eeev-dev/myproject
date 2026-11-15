@@ -1,0 +1,92 @@
+{% extends 'admin/base.html' %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+{% if warnings %}
+<div class="flashes">
+  {% for title, text, step in warnings %}
+  <div class="alert alert-warn" role="status">
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5M12 17.5v.01"/></svg>
+    <span class="text"><b>{{ title }}</b><span>{{ text }}</span></span>
+    <a class="btn" href="{{ url_for('steps.step' ~ step) }}">Перейти к шагу {{ step }}</a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<header class="head">
+  <div>
+    <span class="eyebrow">{{ deadline.title if deadline and deadline.title else 'Производственная практика' }}{% if deadline and deadline.practice_start %} · {{ deadline.practice_start.year }}{% endif %}</span>
+    <h1>Главная</h1>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('steps.index') }}">Пошаговая настройка</a>
+    <a class="btn dark" href="{{ url_for('admin.report') }}">Сформировать рапорт</a>
+  </div>
+</header>
+
+<section class="hero" aria-labelledby="apps-title">
+  <div style="flex:1 1 320px; display:flex; flex-direction:column; gap:14px">
+    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px">
+      <h2 id="apps-title" style="font-size:12px; letter-spacing:.14em; font-weight:600">ЗАЯВКИ СТУДЕНТОВ</h2>
+      {% if deadline and deadline.apply_end %}
+        <span class="pill glass"><span aria-hidden="true" style="width:6px;height:6px;border-radius:3px;background:#D9601F"></span>
+          НАБОР ДО {{ deadline.apply_end.strftime('%d.%m') }}{% if days_left is not none %} · {% if days_left >= 0 %}ОСТАЛОСЬ {{ days_left }} ДН{% else %}ЗАВЕРШЁН{% endif %}{% endif %}</span>
+      {% endif %}
+    </div>
+    <div style="display:flex; align-items:baseline; gap:10px">
+      <span class="num" style="font-size:64px; line-height:1; font-weight:600; letter-spacing:-.03em">{{ applied }}</span>
+      <span style="font-size:18px; font-weight:500">из {{ total }} выбрали место</span>
+    </div>
+    <span class="bar lg" aria-hidden="true"><i style="width: {{ pct }}%"></i></span>
+  </div>
+  <div style="flex:1 1 360px; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; align-self:flex-end">
+    <div class="stat"><span>Из предложенных</span><b class="num">{{ applied - own }}</b></div>
+    <div class="stat"><span>Своё место</span><b class="num">{{ own }}</b></div>
+    <div class="stat"><span>Не выбрали</span><b class="num">{{ not_applied }}</b></div>
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="groups-title">
+    <div class="card-head"><h2 id="groups-title">По группам</h2><a class="link" href="{{ url_for('admin.groups') }}">Все группы</a></div>
+    {% for r in group_rows %}
+    <div class="list-row" style="grid-template-columns:minmax(0,1.2fr) minmax(0,2fr) auto">
+      <span style="display:flex; flex-direction:column; gap:2px; min-width:0">
+        <span style="font-size:15px; font-weight:600">{{ r.group.title }}</span>
+        <span class="cell-sub" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ r.group.head_teacher or 'Руководитель не назначен' }}</span>
+      </span>
+      <span style="display:flex; flex-direction:column; gap:6px">
+        <span class="num" style="font-size:13px"><b>{{ r.done }}</b> из {{ r.total }} выбрали</span>
+        <span class="bar" aria-hidden="true"><i style="width: {{ r.pct }}%"></i></span>
+      </span>
+      {% if r.left %}<a class="pill warn" style="text-decoration:none; height:32px" href="{{ url_for('admin.students', group=r.group.title, status='none') }}">{{ r.left }} не выбрали</a>
+      {% else %}<span class="pill ok">все выбрали</span>{% endif %}
+    </div>
+    {% else %}
+    <p class="empty">Групп пока нет — <a href="{{ url_for('steps.step1') }}">загрузите студентов</a>.</p>
+    {% endfor %}
+  </section>
+
+  <section class="card" aria-labelledby="places-title">
+    <div class="card-head"><h2 id="places-title">Заполненность мест</h2><a class="link" href="{{ url_for('admin.places') }}">Все места</a></div>
+    {% for p in places %}
+    {% set left = p.places or 0 %}
+    <div class="list-row" style="grid-template-columns:minmax(0,1.4fr) minmax(0,2fr)">
+      <span style="font-size:14px; font-weight:600; min-width:0">{{ p.title }}</span>
+      <span style="display:flex; flex-direction:column; gap:6px">
+        <span class="num" style="display:flex; justify-content:space-between; font-size:13px">
+          <span>занято <b>{{ p.taken }}</b> из {{ p.max_places }}</span>
+          <b style="color: {{ '#1F4E7A' if left > 0 else '#8C2A1C' }}">{{ 'свободно ' ~ left if left > 0 else 'мест нет' }}</b>
+        </span>
+        <span class="bar" aria-hidden="true"><i style="width: {{ ((p.taken / p.max_places * 100) if p.max_places else 0)|round|int }}%"></i></span>
+      </span>
+    </div>
+    {% else %}
+    <p class="empty">Мест пока нет — <a href="{{ url_for('steps.step5') }}">добавьте на шаге 5</a>.</p>
+    {% endfor %}
+    <div style="display:flex; justify-content:space-between; padding-top:12px; border-top:1px solid var(--line); font-size:13px; color:var(--ink-3)">
+      <span>Своё место</span><b class="num" style="color:var(--ink)">{{ own }} студ.</b>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -16,13 +16,13 @@ services:
       context: .
     container_name: flask
     volumes:
-      - /root/.uploads/images/flask-yt:/app/app/static/uploads
       - ./migrations:/app/migrations
     env_file:
       - .env
     environment:
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_PORT=${POSTGRES_PORT}
+      # внутри Docker база доступна по имени сервиса, а не localhost
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}

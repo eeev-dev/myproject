@@ -1,0 +1,70 @@
+{% extends 'admin/base.html' %}
+{% block title %}Места практики{% endblock %}
+{% set cols = 'grid-template-columns: minmax(140px, 1.4fr) minmax(120px, 1.2fr) 90px minmax(130px, 1.5fr) minmax(130px, 1.5fr) minmax(120px, 1.2fr) 180px' %}
+{% macro word(n) %}{% if n % 10 == 1 and n % 100 != 11 %}отзыв{% elif n % 10 in [2,3,4] and (n % 100 < 12 or n % 100 > 14) %}отзыва{% else %}отзывов{% endif %}{% endmacro %}
+{% block content %}
+<header class="head">
+  <div><span class="eyebrow">Данные</span><h1>Места практики</h1></div>
+  <button class="btn dark" type="button" data-open="#add-place">
+    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Добавить место</button>
+</header>
+
+<section class="table-wrap" aria-label="Таблица мест практики">
+  <div class="tbl" style="min-width:1000px">
+    <div class="tr th" style="{{ cols }}">
+      <span>Название</span><span>Занятие</span><span>Места</span><span>Требования</span><span>Перспективы</span><span>Контакты</span><span style="text-align:right">Действия</span>
+    </div>
+
+    <form class="tr add-row new" id="add-place" style="{{ cols }}" method="post" action="{{ url_for('admin.add_place') }}">
+      <input class="input sm" name="title" aria-label="Название предприятия" placeholder="Компания" required>
+      <textarea class="textarea sm" name="occupation" rows="2" aria-label="Занятие" placeholder="Специальность"></textarea>
+      <input class="input sm" name="max_places" type="number" min="1" aria-label="Количество мест" value="5">
+      <textarea class="textarea sm" name="requirements" rows="2" aria-label="Требования" placeholder="Требования"></textarea>
+      <textarea class="textarea sm" name="outlook" rows="2" aria-label="Перспективы" placeholder="Перспективы"></textarea>
+      <textarea class="textarea sm" name="contacts" rows="2" aria-label="Контакты" placeholder="Контакты"></textarea>
+      <span class="right">
+        <button class="btn sm dark" type="submit">Добавить</button>
+        <button class="btn sm ghost" type="button" data-close="#add-place">Отмена</button>
+      </span>
+    </form>
+
+    {% for r in rows %}{% set p = r.place %}
+    <form class="tr" style="{{ cols }}; min-height:60px" method="post" action="{{ url_for('admin.update_place', id=p.id) }}">
+      <span class="view cell-strong">{{ p.title }}</span>
+      <span class="view clip" title="{{ p.occupation or '' }}">{{ p.occupation or '—' }}</span>
+      <span class="view" style="display:flex; flex-direction:column; gap:6px" title="Свободно {{ p.places }} из {{ p.max_places }}">
+        <span class="num" style="font-size:13px">{{ p.places }} из {{ p.max_places }}</span>
+        <span class="bar" aria-hidden="true"><i style="width: {{ r.pct }}%"></i></span>
+      </span>
+      <span class="view clip" title="{{ p.requirements or '' }}">{{ p.requirements or '—' }}</span>
+      <span class="view clip" title="{{ p.outlook or '' }}">{{ p.outlook or '—' }}</span>
+      <span class="view clip" title="{{ p.contacts or '' }}">{{ p.contacts or '—' }}</span>
+      <span class="view right">
+        <span class="actions-view right">
+          <button class="btn sm soft" type="button" data-edit aria-label="Изменить {{ p.title }}">Изменить</button>
+          <button class="btn sm danger" type="button" data-ask-delete aria-label="Удалить {{ p.title }}">Удалить</button>
+        </span>
+        <span class="confirm">
+          <span>Удалить?</span>
+          <button class="btn sm danger solid" type="submit" formaction="{{ url_for('admin.delete_place', id=p.id) }}">Да</button>
+          <button class="btn sm soft" type="button" data-cancel>Нет</button>
+        </span>
+      </span>
+
+      <input class="edit input sm" name="title" aria-label="Название предприятия" value="{{ p.title }}" required>
+      <textarea class="edit textarea sm" name="occupation" rows="2" aria-label="Занятие">{{ p.occupation or '' }}</textarea>
+      <input class="edit input sm" name="max_places" type="number" min="1" aria-label="Всего мест" title="Всего мест; свободные пересчитываются автоматически" value="{{ p.max_places }}">
+      <textarea class="edit textarea sm" name="requirements" rows="2" aria-label="Требования">{{ p.requirements or '' }}</textarea>
+      <textarea class="edit textarea sm" name="outlook" rows="2" aria-label="Перспективы">{{ p.outlook or '' }}</textarea>
+      <textarea class="edit textarea sm" name="contacts" rows="2" aria-label="Контакты">{{ p.contacts or '' }}</textarea>
+      <span class="edit right">
+        <button class="btn sm dark" type="submit">Сохранить</button>
+        <button class="btn sm ghost" type="button" data-cancel>Отмена</button>
+      </span>
+    </form>
+    {% else %}
+    <p class="empty">Мест пока нет.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

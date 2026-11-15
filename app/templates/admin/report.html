@@ -1,0 +1,65 @@
+{% extends 'admin/base.html' %}
+{% block title %}Рапорт{% endblock %}
+{% set cols = 'grid-template-columns: minmax(200px, 2fr) minmax(140px, 1fr) minmax(160px, 2fr) minmax(130px, 1.4fr) 44px' %}
+{% block content %}
+<header class="head">
+  <div>
+    <span class="eyebrow">Документы</span>
+    <h1>Рапорт</h1>
+    <p class="lead">Добавьте студентов целыми группами или по руководителям практики, уберите или добавьте отдельных студентов. ФИО, группу и место можно исправить прямо в таблице — правки попадут только в рапорт.</p>
+  </div>
+</header>
+
+<div class="split" id="report" data-students='{{ students|tojson }}' data-groups='{{ groups|tojson }}'>
+  <div class="main" style="flex:1 1 640px">
+    <section class="card" style="display:flex; flex-direction:column; gap:14px" aria-labelledby="src-title">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px">
+        <h2 id="src-title">Кого включить</h2>
+        <div class="tabs" role="tablist" aria-label="Способ добавления">
+          <button type="button" role="tab" aria-selected="false" data-mode="groups">По группам</button>
+          <button type="button" role="tab" aria-selected="true" data-mode="leads">По руководителям</button>
+        </div>
+      </div>
+      <div class="chips" style="gap:8px" role="group" data-sources></div>
+      <label style="display:flex; align-items:center; gap:10px; font-size:14px; color:var(--ink-3)">
+        <input type="checkbox" data-only-confirmed checked style="width:18px; height:18px; accent-color:#1B1C2B"> Только с выбранным местом
+      </label>
+    </section>
+
+    <section class="table-wrap" aria-labelledby="list-title">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; padding:18px 20px 10px">
+        <h2 id="list-title" style="font-size:18px; font-weight:600">Студенты в рапорте · <span data-count>0</span></h2>
+        <button class="btn sm dashed" style="height:40px" type="button" data-toggle-add>+ Добавить студента</button>
+      </div>
+      <div data-add-panel hidden style="margin:0 20px 12px; padding:14px; border-radius:16px; background:#F4F8FC; display:flex; flex-direction:column; gap:8px">
+        <input class="search" style="flex:none" type="search" placeholder="Найти студента" data-cand-search aria-label="Найти студента">
+        <span style="font-size:13px; color:var(--ink-3)">Не вошли в рапорт — нажмите, чтобы добавить:</span>
+        <div class="chips" data-candidates></div>
+      </div>
+      <div class="tbl" style="min-width:640px">
+        <div class="tr th" style="{{ cols }}"><span>ФИО</span><span>Группа</span><span>Место практики</span><span>Руководитель</span><span><span class="sr-only">Убрать</span></span></div>
+        <div data-rows></div>
+        <p class="empty" data-empty>Выберите группы или руководителей выше</p>
+      </div>
+    </section>
+  </div>
+
+  <aside class="side" style="flex:0 1 400px" aria-labelledby="doc-title">
+    <div class="hero" style="flex-direction:column; gap:14px; padding:22px; border-radius:24px; box-shadow:none">
+      <span style="font-size:11px; letter-spacing:.12em; font-weight:600">ДОКУМЕНТ</span>
+      <h2 id="doc-title" style="font-size:18px; line-height:1.35; font-weight:600">Рапорт о направлении студентов на производственную практику</h2>
+      <div style="display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:16px; background:rgba(255,255,255,.6)">
+        <div class="field"><label for="r-group">Группы</label><input class="input sm" id="r-group" data-doc="group"></div>
+        <div class="field"><label for="r-lead">Руководитель практики</label><input class="input sm" id="r-lead" data-doc="head_teacher"></div>
+        <div class="row-2">
+          <div class="field"><label for="r-year">Год</label><input class="input sm" id="r-year" data-doc="year" value="{{ year }}"></div>
+          <div class="field"><label for="r-dur">Сроки</label><input class="input sm" id="r-dur" data-doc="duration" value="{{ duration }}" placeholder="не указаны"></div>
+        </div>
+        <span style="display:flex; justify-content:space-between; font-size:14px"><span>Студентов</span><b class="num" data-count>0</b></span>
+      </div>
+      {% if not duration %}<a href="{{ url_for('steps.step3') }}" style="font-size:13px; font-weight:600; color:var(--blue-ink)">Указать сроки практики</a>{% endif %}
+      <button class="btn dark lg" type="button" data-download data-url="{{ url_for('admin.report_docx') }}">Скачать DOCX</button>
+    </div>
+  </aside>
+</div>
+{% endblock %}

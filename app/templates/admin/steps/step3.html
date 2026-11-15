@@ -1,0 +1,59 @@
+{% extends 'admin/steps/_layout.html' %}
+{% block title %}Шаг 3 · Сроки{% endblock %}
+{% macro date_range(title, prefix, start, end) %}
+{% set empty = not (start and end) %}
+<fieldset class="card" style="margin:0; min-width:0; border:1.5px solid {{ '#F3D9A6' if empty else 'transparent' }}; display:flex; flex-direction:column; gap:14px" data-range>
+  <legend style="float:left; width:100%; padding:0; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px">
+    <b style="font-size:18px">{{ title }}</b>
+    <span class="pill {{ 'warn' if empty else 'ok' }}" data-range-chip>{{ 'Не указан' if empty else 'Указан' }}</span>
+  </legend>
+  <div class="row-2">
+    <div class="field"><label for="{{ prefix }}_start">Начало</label>
+      <input class="input" style="height:48px; border-radius:14px" type="date" id="{{ prefix }}_start" name="{{ prefix }}_start" value="{{ start.isoformat() if start else '' }}" data-preview="{{ prefix }}"></div>
+    <div class="field"><label for="{{ prefix }}_end">Окончание</label>
+      <input class="input" style="height:48px; border-radius:14px" type="date" id="{{ prefix }}_end" name="{{ prefix }}_end" value="{{ end.isoformat() if end else '' }}" data-preview="{{ prefix }}"></div>
+  </div>
+  <p style="margin:0; font-size:13px; line-height:1.45; color:var(--warn-ink); {{ '' if empty else 'display:none' }}" data-range-note>Укажите обе даты, иначе студенты не увидят этот срок в приложении.</p>
+</fieldset>
+{% endmacro %}
+{% block step %}
+<header class="head"><div>
+  <span class="eyebrow">Шаг 3 из 6</span>
+  <h1>Назначьте сроки</h1>
+  <p class="lead">Пока идёт набор, студенты выбирают места в приложении. Сроки прохождения попадут в приложение и в рапорт.</p>
+</div></header>
+
+<form method="post" class="split">
+  <div class="main">
+    <div class="card field">
+      <label for="title">Название практики</label>
+      <input class="input" style="height:48px; border-radius:14px" id="title" name="title" value="{{ d.title if d and d.title else '' }}" placeholder="Например, Производственная практика">
+    </div>
+    {{ date_range('Набор на практику', 'apply', d.apply_start if d, d.apply_end if d) }}
+    {{ date_range('Прохождение практики', 'practice', d.practice_start if d, d.practice_end if d) }}
+    <div><button class="btn dark lg" type="submit">Сохранить сроки</button></div>
+  </div>
+
+  <aside class="side" aria-label="Как увидит студент">
+    <span class="eyebrow" style="padding:0 4px">Так увидит студент</span>
+    <div style="display:flex; flex-direction:column; gap:12px; padding:18px; border-radius:24px; background:linear-gradient(180deg, #86B8E6 0%, #B4D6EF 58%, #E8F1EC 100%)">
+      <span style="font-size:11px; font-weight:600; letter-spacing:.14em" data-preview-title>{{ (d.title if d and d.title else 'Практика')|upper }}</span>
+      <div class="row-2" style="gap:8px">
+        <div style="display:flex; flex-direction:column; gap:6px; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.45)">
+          <span style="font-size:10px; letter-spacing:.12em">СРОК НАБОРА</span>
+          <b style="font-size:16px; white-space:nowrap" data-preview-out="apply">{{ apply_preview or 'не объявлено' }}</b>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.45)">
+          <span style="font-size:10px; letter-spacing:.12em">ПРОХОЖДЕНИЕ</span>
+          <b style="font-size:16px; white-space:nowrap" data-preview-out="practice">{{ practice_preview or 'не объявлено' }}</b>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <footer class="step-foot" style="flex-basis:100%">
+    <a class="btn lg" href="{{ url_for('steps.step2') }}">Назад</a>
+    <button class="btn dark lg" type="submit" name="go" value="next">Далее: инструкция</button>
+  </footer>
+</form>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'admin/base.html' %}
+{% set active = 'wizard' %}
+{% block content %}
+<ol class="steps" aria-label="Шаги подготовки">
+  {% set labels = {'done': 'Готово', 'warn': 'Не завершён', 'todo': 'Не начат'} %}
+  {% for s in nav_steps %}
+  <li class="{{ s.state }}">
+    <a href="{{ url_for('steps.step' ~ s.n) }}" aria-current="{{ 'step' if s.n == current else 'false' }}">
+      <span class="top"><span class="n">{{ s.n }}</span><span class="st">{{ labels[s.state] }}</span></span>
+      <span class="lbl">{{ s.label }}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ol>
+{% block step %}{% endblock %}
+{% endblock %}

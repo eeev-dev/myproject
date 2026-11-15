@@ -1,0 +1,36 @@
+{% extends 'admin/steps/_layout.html' %}
+{% block title %}Шаг 2 · Руководители групп{% endblock %}
+{% block step %}
+<form method="post" style="display:contents">
+<header class="head">
+  <div>
+    <span class="eyebrow">Шаг 2 из 6</span>
+    <h1>Назначьте группам руководителей</h1>
+    <p class="lead">Впишите руководителя практики для каждой группы. Студенты увидят его в приложении, он же попадёт в рапорт.</p>
+  </div>
+  {% if groups %}<span class="pill {{ 'warn' if left else 'ok' }}" style="font-size:13px; padding:6px 12px">{{ 'Без руководителя: ' ~ left if left else 'Всем группам назначены руководители' }}</span>{% endif %}
+</header>
+
+<section class="card" style="padding:4px 24px" aria-label="Группы и руководители">
+  {% for g in groups %}
+  <div style="display:flex; flex-wrap:wrap; align-items:center; gap:12px 24px; padding:16px 0; {{ 'border-bottom:1px solid var(--line)' if not loop.last }}">
+    <span style="flex:0 0 180px; display:flex; flex-direction:column; gap:2px">
+      <b style="font-size:18px">{{ g.title }}</b><span class="muted" style="font-size:13px">{{ counts.get(g.title, 0) }} студентов</span>
+    </span>
+    <label for="lead-{{ g.id }}" class="sr-only">Руководитель практики группы {{ g.title }}</label>
+    <input id="lead-{{ g.id }}" name="lead-{{ g.id }}" class="input {{ '' if g.head_teacher else 'warn' }}" style="flex:1 1 320px; min-width:0; height:48px; border-radius:14px"
+           placeholder="ФИО руководителя практики" value="{{ g.head_teacher or '' }}" list="leads-list">
+  </div>
+  {% else %}
+  <p class="empty">Групп пока нет — <a href="{{ url_for('steps.step1') }}">загрузите студентов на шаге 1</a>.</p>
+  {% endfor %}
+</section>
+<datalist id="leads-list">{% for l in groups|map(attribute='head_teacher')|select|unique %}<option value="{{ l }}">{% endfor %}</datalist>
+{% if groups %}<div><button class="btn dark lg" type="submit">Сохранить</button></div>{% endif %}
+
+<footer class="step-foot">
+  <a class="btn lg" href="{{ url_for('steps.step1') }}">Назад</a>
+  <button class="btn dark lg" type="submit" name="go" value="next">Далее: сроки практики</button>
+</footer>
+</form>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'admin/steps/_layout.html' %}
+{% block title %}Шаг 1 · Загрузка студентов{% endblock %}
+{% block step %}
+<header class="head"><div>
+  <span class="eyebrow">Шаг 1 из 6</span>
+  <h1>Загрузите студентов</h1>
+  <p class="lead">Загрузите файл f2_zachetki.csv из деканата. Студенты автоматически распределятся по группам, а список можно будет поправить в таблице студентов.</p>
+</div></header>
+
+{% if total and not replace %}
+<section class="card" style="display:flex; flex-wrap:wrap; align-items:center; gap:16px; border-radius:22px" aria-label="Загруженные студенты">
+  <span class="file-ic" style="width:44px; height:52px; font-size:9px; color:var(--ok-ink)">CSV</span>
+  <span style="flex:1 1 280px; display:flex; flex-direction:column; gap:3px">
+    <b style="font-size:16px">Студенты загружены</b>
+    <span style="font-size:13px; color:var(--ink-3)">{{ total }} студентов · {{ groups|length }} групп</span>
+  </span>
+  <span class="pill ok">Загружено</span>
+  <a class="btn" href="{{ url_for('steps.step1', replace=1) }}">Заменить файл</a>
+</section>
+
+<section style="display:flex; flex-direction:column; gap:12px" aria-labelledby="split-title">
+  <div class="card-head" style="padding:0"><h2 id="split-title" style="font-size:20px; font-weight:600">Разбивка по группам</h2>
+    <a class="link" href="{{ url_for('admin.groups') }}">Редактировать группы</a></div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px">
+    {% for g in groups %}
+    <article class="card" style="display:flex; flex-direction:column; gap:12px; padding:18px; border-radius:22px">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px"><h3 style="font-size:18px; font-weight:600">{{ g.title }}</h3><span class="tag num">{{ g.count }}</span></div>
+      <ul style="margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px; font-size:14px; color:var(--ink-2)">
+        {% for n in g.names %}<li>{{ n }}</li>{% endfor %}
+      </ul>
+      {% if g.more %}<span class="muted" style="font-size:13px">и ещё {{ g.more }}</span>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<form method="post" enctype="multipart/form-data" aria-label="Загрузка файла">
+  <label class="drop" data-drop>
+    <span class="ic" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+    <span class="big">Перетащите файл f2_zachetki.csv сюда</span>
+    <span style="font-size:14px; color:var(--ink-3)">CSV (UTF-8)</span>
+    <input class="sr-only" type="file" name="file" accept=".csv" data-file-input data-autosubmit>
+    <span class="btn dark lg" aria-hidden="true">Выбрать файл</span>
+    <span class="filename" data-file-name></span>
+    <span class="muted" style="font-size:12px">Столбцы: курс, группа, ФИО, номер зачётки</span>
+    {% if total %}<span class="pill warn">Текущий список студентов ({{ total }}) и выбранные ими места будут заменены</span>{% endif %}
+  </label>
+</form>
+{% endif %}
+
+<footer class="step-foot">
+  <a class="btn lg" href="{{ url_for('admin.dashboard') }}">На главную</a>
+  <a class="btn dark lg" href="{{ url_for('steps.step2') }}">Далее: руководители групп</a>
+</footer>
+{% endblock %}

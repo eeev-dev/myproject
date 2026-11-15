@@ -1,0 +1,65 @@
+{% extends 'admin/base.html' %}
+{% block title %}Группы{% endblock %}
+{% set cols = 'grid-template-columns: 140px 90px minmax(200px, 2fr) 110px minmax(160px, 1.5fr) 200px' %}
+{% block content %}
+<header class="head">
+  <div><span class="eyebrow">Данные</span><h1>Группы</h1></div>
+  <button class="btn dark" type="button" data-open="#add-group">
+    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Добавить группу</button>
+</header>
+
+<section class="table-wrap" aria-label="Таблица групп">
+  <div class="tbl">
+    <div class="tr th" style="{{ cols }}">
+      <span>Группа</span><span>Курс</span><span>Руководитель практики</span><span>Студентов</span><span>Выбрали место</span><span style="text-align:right">Действия</span>
+    </div>
+
+    <form class="tr add-row new" id="add-group" style="{{ cols }}" method="post" action="{{ url_for('admin.add_group') }}">
+      <input class="input sm" name="title" aria-label="Название группы" placeholder="ПИ-3-23" required>
+      <input class="input sm" name="year" type="number" min="1" max="6" aria-label="Курс" value="3">
+      <input class="input sm" name="head_teacher" aria-label="Руководитель практики" placeholder="Фамилия И. О.">
+      <span class="muted">0</span><span class="muted">—</span>
+      <span class="right">
+        <button class="btn sm dark" type="submit">Добавить</button>
+        <button class="btn sm ghost" type="button" data-close="#add-group">Отмена</button>
+      </span>
+    </form>
+
+    {% for r in rows %}{% set g = r.group %}
+    <form class="tr" style="{{ cols }}; min-height:60px" method="post" action="{{ url_for('admin.update_group', id=g.id) }}">
+      <span class="view cell-strong">{{ g.title }}</span>
+      <span class="view">{{ g.year or '—' }}</span>
+      <span class="view" style="color: {{ 'var(--ink)' if g.head_teacher else '#8A4B00' }}">{{ g.head_teacher or 'Не назначен' }}</span>
+      <span class="view num">{{ r.total }}</span>
+      <span class="view" style="display:flex; flex-direction:column; gap:6px">
+        <span class="num" style="font-size:13px">{{ r.done }} из {{ r.total }}</span>
+        <span class="bar" aria-hidden="true"><i style="width: {{ r.pct }}%"></i></span>
+      </span>
+      <span class="view right">
+        <span class="actions-view right">
+          <button class="btn sm soft" type="button" data-edit aria-label="Изменить группу {{ g.title }}">Изменить</button>
+          <button class="btn sm danger" type="button" data-ask-delete aria-label="Удалить группу {{ g.title }}">Удалить</button>
+        </span>
+        <span class="confirm">
+          <span>Удалить с {{ r.total }} студ.?</span>
+          <button class="btn sm danger solid" type="submit" formaction="{{ url_for('admin.delete_group', id=g.id) }}">Да</button>
+          <button class="btn sm soft" type="button" data-cancel>Нет</button>
+        </span>
+      </span>
+
+      <input class="edit input sm" name="title" aria-label="Название группы" value="{{ g.title }}" required>
+      <input class="edit input sm" name="year" type="number" min="1" max="6" aria-label="Курс" value="{{ g.year or '' }}">
+      <input class="edit input sm" name="head_teacher" aria-label="Руководитель практики" value="{{ g.head_teacher or '' }}">
+      <span class="edit num">{{ r.total }}</span>
+      <span class="edit num" style="font-size:13px">{{ r.done }} из {{ r.total }}</span>
+      <span class="edit right">
+        <button class="btn sm dark" type="submit">Сохранить</button>
+        <button class="btn sm ghost" type="button" data-cancel>Отмена</button>
+      </span>
+    </form>
+    {% else %}
+    <p class="empty">Групп пока нет. Они создаются автоматически при <a href="{{ url_for('steps.step1') }}">загрузке студентов</a>.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

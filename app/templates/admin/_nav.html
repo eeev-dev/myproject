@@ -1,0 +1,53 @@
+{% macro item(id, label, href, count=None) -%}
+<a class="nav-item" href="{{ href }}" aria-current="{{ 'page' if active == id else 'false' }}">
+  <span><span class="dot" aria-hidden="true"></span>{{ label }}</span>
+  {% if count is not none %}<span class="count num">{{ count }}</span>{% endif %}
+</a>
+{%- endmacro %}
+<nav class="nav" aria-label="Основное меню">
+  <div class="nav-brand">
+    <span class="nav-logo" aria-hidden="true"></span>
+    <span><b>Практика</b><small>Кабинет кафедры</small></span>
+  </div>
+
+  <div class="nav-section">
+    {{ item('dashboard', 'Главная', url_for('admin.dashboard')) }}
+  </div>
+
+  <div class="nav-section">
+    <span class="nav-title">ПОДГОТОВКА</span>
+    <a class="nav-card" href="{{ url_for('steps.index') }}" aria-current="{{ 'page' if active == 'wizard' else 'false' }}">
+      <span class="line"><b style="font-size:14px">Пошаговая настройка</b><span class="num" style="font-size:12px">{{ nav_steps_done }} из 6</span></span>
+      <span class="bar" aria-hidden="true"><i style="width: {{ (nav_steps_done / 6 * 100)|round|int }}%"></i></span>
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <span class="nav-title">СРОКИ</span>
+    <a class="nav-card soft" href="{{ url_for('steps.step3') }}" aria-label="Сроки практики, изменить">
+      <span class="line"><span>Набор</span>
+        {% if nav_apply %}<b class="num">{{ nav_apply }}</b>{% else %}<span class="pill warn">не указан</span>{% endif %}</span>
+      <span class="line"><span>Практика</span>
+        {% if nav_practice %}<b class="num">{{ nav_practice }}</b>{% else %}<span class="pill warn">не указана</span>{% endif %}</span>
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <span class="nav-title">ДАННЫЕ</span>
+    {{ item('students', 'Студенты', url_for('admin.students'), nav_counts.students) }}
+    {{ item('groups', 'Группы', url_for('admin.groups'), nav_counts.groups) }}
+    {{ item('places', 'Места практики', url_for('admin.places'), nav_counts.places) }}
+    {{ item('reviews', 'Отзывы о местах', url_for('admin.reviews'), nav_counts.reviews) }}
+  </div>
+
+  <div class="nav-section">
+    <span class="nav-title">ДОКУМЕНТЫ</span>
+    {{ item('report', 'Рапорт', url_for('admin.report')) }}
+  </div>
+
+  <div class="nav-foot">
+    <span class="avatar" aria-hidden="true">А</span>
+    <span class="who"><b>{{ current_user.login }}</b><small>Администратор</small></span>
+    <a class="btn sm ghost" href="{{ url_for('auth.logout') }}">Выйти</a>
+  </div>
+</nav>
