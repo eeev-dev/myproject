@@ -4,7 +4,7 @@
 <header class="head"><div>
   <span class="eyebrow">Шаг 6 из 6</span>
   <h1>Отправьте приложение студентам</h1>
-  <p class="lead">Загрузите установочный файл, затем скачайте его или отправьте ссылку в чат группы. Студенты входят по номеру студенческого билета.</p>
+  <p class="lead">Загрузите установочный файл, скачайте его и отправьте в чат группы вместе с сообщением. Студенты входят по номеру студенческого билета.</p>
 </div></header>
 
 <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:stretch">
@@ -18,9 +18,7 @@
       {% if apk %}
       <div class="actions">
         <a class="btn dark lg" href="{{ url_for('static', filename='app/' ~ apk.name) }}" download>
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Скачать APK</a>
-        <button class="btn glass lg" type="button" data-copy="{{ apk_url }}" data-copied="Ссылка скопирована">Скопировать ссылку</button>
-      </div>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Скачать APK</a>      </div>
       {% endif %}
       <form method="post" enctype="multipart/form-data">
         <label class="btn {{ 'glass' if apk else 'dark lg' }}" style="cursor:pointer">

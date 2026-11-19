@@ -301,12 +301,10 @@ def step6():
 
     d = Deadline.current()
     apk = state.app_file()
-    apk_url = url_for('static', filename=f'app/{apk["name"]}', _external=True) if apk else None
     until = f' до {d.apply_end:%d.%m}' if d and d.apply_end else ''
     practice = f'«{d.title}»' if d and d.title else 'производственную практику'
-    link = f' по ссылке {apk_url}' if apk_url else ''
     message = (f'Здравствуйте! Набор на {practice} открыт{until}. '
-               f'Установите приложение «Практика»{link}, '
+               'Установите приложение «Практика» из прикреплённого файла, '
                'войдите по номеру студенческого билета и выберите место практики.')
-    return render_template('admin/steps/step6.html', current=6, apk=apk, apk_url=apk_url,
+    return render_template('admin/steps/step6.html', current=6, apk=apk,
                            message=message, sent=state.app_sent())
